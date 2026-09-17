@@ -14,8 +14,13 @@ final class MenuBarModule {
     private var history: [Double] = []
     private let historyLimit = 40
 
+    /// Panel otwierany kliknięciem tej pozycji – jeden na moduł
+    let popover = NSPopover()
+
     init(kind: WidgetKind, target: AnyObject, action: Selector) {
         self.kind = kind
+        popover.behavior = .transient
+        popover.contentViewController = ModulePopoverController(kind: kind)
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.font = Fonts.mono(10.5, weight: .medium)
         item.button?.imagePosition = .imageLeading
@@ -23,6 +28,18 @@ final class MenuBarModule {
         item.button?.action = action
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         item.button?.toolTip = kind.title
+        applyLength()
+    }
+
+    /// Szerokość pozycji jest stała – inaczej zmiana liczby przesuwałaby cały pasek
+    func applyLength() {
+        let style = MenuBarStyle(rawValue: Prefs.shared.menuBarStyle) ?? .both
+        let text = kind.menuBarWidth
+        switch style {
+        case .valueOnly: item.length = text + 22
+        case .graphOnly: item.length = 42
+        case .both: item.length = text + 44
+        }
     }
 
     func remove() { NSStatusBar.system.removeStatusItem(item) }
@@ -34,6 +51,7 @@ final class MenuBarModule {
         if history.count > historyLimit { history.removeFirst(history.count - historyLimit) }
 
         b.title = style == .graphOnly ? "" : " " + kind.menuBarText(s)
+        b.alignment = .left
         b.image = style == .valueOnly ? symbolImage() : sparkline()
         b.imageHugsTitle = true
     }
@@ -81,8 +99,6 @@ final class StatusItemController: NSObject {
     private var modules: [WidgetKind: MenuBarModule] = [:]
     private let menu = NSMenu()
     private let info = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    /// panel z miniwykresami otwierany lewym przyciskiem
-    private let popover = NSPopover()
 
     override init() {
         super.init()
@@ -92,8 +108,6 @@ final class StatusItemController: NSObject {
         menu.addItem(withTitle: L("Ustawienia…"), action: #selector(AppDelegate.openSettings), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: L("Zakończ"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
-        popover.behavior = .transient
-        popover.contentViewController = MenuBarPopoverController()
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(prefsChanged), name: .prefsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(prefsChanged), name: .themeChanged, object: nil)
@@ -116,6 +130,7 @@ final class StatusItemController: NSObject {
         for kind in wanted.reversed() where modules[kind] == nil {
             modules[kind] = MenuBarModule(kind: kind, target: self, action: #selector(buttonClicked(_:)))
         }
+        for m in modules.values { m.applyLength() }
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
@@ -126,10 +141,12 @@ final class StatusItemController: NSObject {
             module.item.menu = nil
             return
         }
-        if popover.isShown { popover.performClose(nil) }
+        // każdy moduł ma własny panel ze szczegółami tej metryki
+        for other in modules.values where other !== module && other.popover.isShown { other.popover.performClose(nil) }
+        if module.popover.isShown { module.popover.performClose(nil) }
         else {
-            popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
-            popover.contentViewController?.view.window?.makeKey()
+            module.popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
+            module.popover.contentViewController?.view.window?.makeKey()
         }
     }
 

@@ -194,7 +194,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         DispatchQueue.main.async { [weak self] in
             let visible = self?.windowController?.window?.isVisible ?? false
             Monitor.shared.background = !visible && !WidgetManager.shared.anyVisible
+            self?.updateActivationPolicy(windowVisible: visible)
         }
+    }
+
+    /// Bez okna aplikacja znika z Docka i z przełącznika programów – zostaje w pasku menu.
+    /// Ikonę zostawiamy tylko wtedy, gdy nie ma czym jej zastąpić (brak modułów i paneli).
+    private func updateActivationPolicy(windowVisible: Bool) {
+        let reachable = !Prefs.shared.menuBarModules.isEmpty || WidgetManager.shared.anyVisible
+        let wanted: NSApplication.ActivationPolicy = (windowVisible || !Prefs.shared.keepRunning || !reachable) ? .regular : .accessory
+        guard NSApp.activationPolicy() != wanted else { return }
+        NSApp.setActivationPolicy(wanted)
+        if wanted == .regular { NSApp.activate(ignoringOtherApps: true) }
     }
 
     @objc func toggleWidget(_ sender: NSMenuItem) {
@@ -204,7 +215,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     @objc func openSettings() { windowController.selectPage(windowController.settingsPage) }
-    @objc func showMainWindow(_ sender: Any?) { windowController.showWindow(nil); NSApp.activate(ignoringOtherApps: true) }
+    @objc func showMainWindow(_ sender: Any?) {
+        // po pracy w tle wracamy do zwykłego trybu, żeby okno dostało fokus i ikonę w Docku
+        if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
+        windowController.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        windowController.window?.makeKeyAndOrderFront(nil)
+    }
     @objc func toggleSidebar() { windowController.toggleSidebar() }
     @objc func focusSearch() { windowController.showWindow(nil); windowController.focusSearch() }
     @objc func setAppTheme(_ sender: NSMenuItem) { if let k = AppTheme(rawValue: sender.tag) { ThemeManager.shared.setAppTheme(k) } }

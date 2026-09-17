@@ -51,17 +51,31 @@ enum WidgetKind: String, CaseIterable {
         }
     }
 
+    /// Stała szerokość napisu w pasku menu (znaki są monospace, więc pozycja nie skacze)
+    var menuBarWidth: CGFloat {
+        switch self {
+        case .network: return 104
+        case .disk, .power: return 62
+        default: return 40
+        }
+    }
+
     /// Krótki napis mieszczący się w pasku menu
     func menuBarText(_ s: Snapshot) -> String {
         switch self {
-        case .cpu: return Fmt.percent(s.cpu.total, precision: 0)
-        case .memory: return Fmt.percent(s.mem.total > 0 ? 100 * Double(s.mem.used) / Double(s.mem.total) : 0, precision: 0)
-        case .gpu: return s.gpuUtil.map { Fmt.percent($0, precision: 0) } ?? "—"
-        case .temperature: return s.hotspot.map { Fmt.temp($0, precision: 0) } ?? "—"
-        case .network: return "↓\(Fmt.rate(s.net.rxRate)) ↑\(Fmt.rate(s.net.txRate))"
-        case .disk: return Fmt.rate(s.disk.readRate + s.disk.writeRate)
-        case .power: return s.sysWatts.map { Fmt.watts($0) } ?? "—"
+        case .cpu: return pad(Fmt.percent(s.cpu.total, precision: 0), 4)
+        case .memory: return pad(Fmt.percent(s.mem.total > 0 ? 100 * Double(s.mem.used) / Double(s.mem.total) : 0, precision: 0), 4)
+        case .gpu: return pad(s.gpuUtil.map { Fmt.percent($0, precision: 0) } ?? "—", 4)
+        case .temperature: return pad(s.hotspot.map { Fmt.temp($0, precision: 0) } ?? "—", 5)
+        case .network: return "↓" + pad(Fmt.rate(s.net.rxRate), 9) + " ↑" + pad(Fmt.rate(s.net.txRate), 9)
+        case .disk: return pad(Fmt.rate(s.disk.readRate + s.disk.writeRate), 9)
+        case .power: return pad(s.sysWatts.map { Fmt.watts($0) } ?? "—", 6)
         }
+    }
+
+    /// Dopełnia spacjami z lewej, żeby napis miał zawsze tę samą długość
+    private func pad(_ text: String, _ width: Int) -> String {
+        text.count >= width ? text : String(repeating: " ", count: width - text.count) + text
     }
 
     /// Ile serii rysuje wykres (sieć i dysk mają dwie: odbiór/nadawanie, odczyt/zapis)

@@ -24,6 +24,11 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Największe procesy (pamięć)", "Largest processes (memory)"),
+        ("Dyski fizyczne", "Physical disks"),
+        ("Interfejsy", "Interfaces"),
+        ("Presja", "Pressure"),
+        ("Swap użyty", "Swap used"),
         ("Wygląd pozycji", "Item appearance"),
         ("Wartość, mini wykres albo oba naraz. Lewy przycisk otwiera panel z wykresami, prawy menu.", "A value, a mini graph or both. Left-click opens the graph panel, right-click the menu."),
         ("Tylko wartość", "Value only"),
