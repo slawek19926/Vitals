@@ -15,7 +15,7 @@
 	<key>LSMinimumSystemVersion</key><string>13.0</string>
 	<key>NSHighResolutionCapable</key><true/>
 	<key>NSPrincipalClass</key><string>NSApplication</string>
-	<key>NSHumanReadableCopyright</key><string>© 2026</string>
+	<key>NSHumanReadableCopyright</key><string>© 2026 Sławomir Sendra · GNU GPL v3</string>
 	<key>NSLocationWhenInUseUsageDescription</key><string>macOS wymaga zgody na dostęp do lokalizacji, aby aplikacja mogła pokazać nazwę sieci Wi-Fi (SSID). Położenie nie jest nigdzie wysyłane ani zapisywane.</string>
 	<key>SMPrivilegedExecutables</key>
 	<dict>

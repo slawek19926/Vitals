@@ -24,6 +24,11 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Monitor procesów i sprzętu dla macOS.", "Process and hardware monitor for macOS."),
+        ("pomiary", "measurements"),
+        ("Wersja", "Version"),
+        ("zbudowano", "built"),
+        ("licencja GNU GPL v3 lub nowsza, bez żadnej gwarancji.", "licensed under GNU GPL v3 or later, with no warranty."),
         ("Wydania pobierane są z repozytorium", "Releases are downloaded from the repository"),
         ("Aplikacja zostanie zamknięta, pakiet podmieniony i uruchomiony ponownie.", "The app will quit, the bundle will be replaced and launched again."),
         ("Dostępna jest nowa wersja", "A new version is available"),

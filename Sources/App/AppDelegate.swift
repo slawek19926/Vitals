@@ -186,7 +186,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             .applicationName: "Vitals",
             .applicationVersion: AppVersion.short,
             .version: "\(AppVersion.build)",
-            .credits: NSAttributedString(string: "Monitor procesów i sprzętu dla macOS.\nSwift + AppKit, pomiary: libproc, Mach, sysctl, IOKit, SMC, IOReport.\nWersja \(AppVersion.full) · zbudowano \(AppVersion.buildDate)\n\(hw.model) · macOS \(hw.osVersion)"),
+            .credits: NSAttributedString(string: L("Monitor procesów i sprzętu dla macOS.") + "\nSwift + AppKit, " + L("pomiary") + ": libproc, Mach, sysctl, IOKit, SMC, IOReport.\n"
+                                        + L("Wersja") + " \(AppVersion.full) · " + L("zbudowano") + " \(AppVersion.buildDate)\n\(hw.model) · macOS \(hw.osVersion)\n\n"
+                                        + "© 2026 Sławomir Sendra · " + L("licencja GNU GPL v3 lub nowsza, bez żadnej gwarancji.")),
         ])
     }
 

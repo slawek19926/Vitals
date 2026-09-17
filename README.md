@@ -9,7 +9,7 @@
 [![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)](https://developer.apple.com/documentation/appkit)
 [![Apple silicon](https://img.shields.io/badge/Apple%20silicon-natywnie-success)](#)
 [![Zero dependencies](https://img.shields.io/badge/zale%C5%BCno%C5%9Bci-brak-lightgrey)](#)
-[![MIT](https://img.shields.io/badge/licencja-MIT-blue)](LICENSE)
+[![GPLv3](https://img.shields.io/badge/licencja-GPL--3.0-blue)](LICENSE)
 
 </div>
 
@@ -113,7 +113,14 @@ Aplikacja nie wysyła nigdzie żadnych danych. Jedyne połączenie sieciowe to s
 
 ## Licencja
 
-[MIT](LICENSE) — rób z tym, co chcesz, zachowując informację o autorstwie.
+© 2026 Sławomir Sendra. Kod jest dostępny na [GNU GPL v3](LICENSE).
+
+- Możesz go używać, badać, zmieniać i rozprowadzać — także we własnych projektach.
+- Rozprowadzając własną wersję, musisz udostępnić jej pełny kod na tej samej licencji. Zamknięty, komercyjny produkt zbudowany na tym kodzie jest niedozwolony.
+- Prawa autorskie pozostają przy autorze, który jako jedyny może wydawać Vitals na innych warunkach (np. wersję płatną albo dystrybucję w Mac App Store, gdzie GPL nie obowiązuje).
+- Nazwa **Vitals**, ikona i certyfikat podpisu nie są objęte licencją kodu. Fork musi wystąpić pod własną nazwą i własnym podpisem; kanał aktualizacji przyjmuje wyłącznie pakiety o zgodnym identyfikatorze zespołu.
+
+Chcesz użyć kodu na innych warunkach niż GPL? Napisz do autora.
 
 ---
 
