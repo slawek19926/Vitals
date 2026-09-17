@@ -1,0 +1,12 @@
+# artefakty budowania
+.build/
+build/
+Resources/gen/
+
+# Xcode / SwiftPM
+.swiftpm/xcode/
+*.xcuserdatad
+DerivedData/
+
+# macOS
+.DS_Store
