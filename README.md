@@ -10,6 +10,7 @@
 [![Apple silicon](https://img.shields.io/badge/Apple%20silicon-natywnie-success)](#)
 [![Zero dependencies](https://img.shields.io/badge/zale%C5%BCno%C5%9Bci-brak-lightgrey)](#)
 [![GPLv3](https://img.shields.io/badge/licencja-GPL--3.0-blue)](LICENSE)
+[![Wsparcie](https://img.shields.io/badge/wsparcie-certyfikat%20Apple-FF5E5B?logo=kofi&logoColor=white)](#wsparcie)
 
 **Polski** · [English](README.en.md)
 
@@ -123,6 +124,22 @@ Pomiary chodzą w tle na własnej kolejce (domyślnie 10 razy na sekundę dla ta
 ## Prywatność
 
 Aplikacja nie wysyła nigdzie żadnych danych. Jedyne połączenie sieciowe to sprawdzenie najnowszego wydania w API GitHuba — można je wyłączyć w Ustawieniach.
+
+## Wsparcie
+
+Vitals jest darmowy i będzie darmowy. Zbieram natomiast na jedną konkretną rzecz: **konto Apple Developer Program, 99 $ (około 400 zł) rocznie**.
+
+Bez niego wydania są podpisane certyfikatem deweloperskim, więc macOS wita je ostrzeżeniem „Apple nie może sprawdzić, czy aplikacja nie zawiera złośliwego oprogramowania”, a pomocnik uprzywilejowany instaluje się wyłącznie w wersji zbudowanej ze źródeł. Z kontem dostajecie:
+
+- wydania podpisane i notaryzowane — otwierają się jednym kliknięciem, bez ostrzeżeń i sztuczek z `xattr`,
+- pomocnika działającego od razu po instalacji gotowej paczki, czyli pełne dane procesów i liczniki mocy bez hasła przy każdym starcie,
+- instalację przez `brew install --cask vitals`, bo Homebrew nie przyjmuje pakietów bez notaryzacji.
+
+Każda złotówka idzie wyłącznie na to. Kiedy uzbiera się na rok, kupuję konto i publikuję notaryzowane wydanie; nadwyżka leci na kolejny rok.
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-wesprzyj-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
+
+Nie masz ochoty wpłacać? Gwiazdka w repozytorium, zgłoszony błąd albo wzmianka u znajomych też pomagają — w zasięgu, nie w kasie, ale pomagają.
 
 ## Licencja
 

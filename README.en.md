@@ -10,6 +10,7 @@
 [![Apple silicon](https://img.shields.io/badge/Apple%20silicon-native-success)](#)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](#)
 [![GPLv3](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+[![Support](https://img.shields.io/badge/support-Apple%20certificate-FF5E5B?logo=kofi&logoColor=white)](#support)
 
 **English** · [Polski](README.md)
 
@@ -123,6 +124,22 @@ Sampling runs on its own background queue (10 times per second for cheap reads b
 ## Privacy
 
 The app sends no data anywhere. Its only network request asks the GitHub API for the latest release — and that can be turned off in Settings.
+
+## Support
+
+Vitals is free and will stay free. What I am collecting for is one specific thing: an **Apple Developer Program membership, $99 a year**.
+
+Without it, releases are signed with a development certificate, so macOS greets them with “Apple cannot verify this app is free of malware”, and the privileged helper only installs in a build made from source. With the membership you get:
+
+- signed and notarized releases that open with one click, with no warnings and no `xattr` tricks,
+- a helper that works straight from the downloaded package — full process data and power counters without a password at every launch,
+- installation through `brew install --cask vitals`, since Homebrew does not accept packages without notarization.
+
+Every contribution goes to that and nothing else. Once a year is covered, I buy the membership and publish a notarized release; anything extra funds the next year.
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
+
+Not in the mood to donate? A star on the repository, a bug report or a word to a friend helps too — with reach rather than money, but it helps.
 
 ## License
 
