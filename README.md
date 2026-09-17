@@ -13,12 +13,22 @@
 
 </div>
 
-<!-- Zrzuty ekranu: wrzuć pliki do docs/screenshots/ i odkomentuj
-<div align="center">
-  <img src="docs/screenshots/summary.png" width="49%" alt="Podsumowanie">
-  <img src="docs/screenshots/performance.png" width="49%" alt="Wydajność">
-</div>
--->
+<img src="docs/screenshots/summary.png" alt="Podsumowanie: mierniki CPU, GPU, temperatury i RAM, przegląd CPU z jądrem, TOP 15 procesów i wykres pamięci">
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/performance.png" alt="Wydajność: lista urządzeń i wykresy na rdzeń"><br><sub><b>Wydajność</b> — każdy rdzeń, dysk i interfejs osobno</sub></td>
+<td width="50%"><img src="docs/screenshots/diskspace.png" alt="Miejsce na dysku: mapa katalogów i pierścień typów plików"><br><sub><b>Miejsce na dysku</b> — treemap z drążeniem i powiększaniem</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/processes.png" alt="Procesy: drzewo z kolumnami CPU, pamięci i energii"><br><sub><b>Procesy</b> — drzewo po PPID, energia, wybudzenia, sygnały</sub></td>
+<td><img src="docs/screenshots/sensors.png" alt="Zasilanie i czujniki: drzewo czujników SMC"><br><sub><b>Zasilanie i czujniki</b> — całe SMC z min/maks</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/apple-silicon.png" alt="Apple Silicon: klastry rdzeni P i E z wykresami"><br><sub><b>Apple Silicon</b> — klastry P/E, GPU, Neural Engine</sub></td>
+<td><img src="docs/screenshots/health.png" alt="Zdrowie systemu: lista kontroli i dziennik zdarzeń"><br><sub><b>Zdrowie systemu</b> — kontrole, alerty, dziennik</sub></td>
+</tr>
+</table>
 
 ---
 
