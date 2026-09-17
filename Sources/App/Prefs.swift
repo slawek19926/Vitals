@@ -123,6 +123,11 @@ final class Prefs {
     var widgetOpacity: Double { get { d.object(forKey: "widgetOpacity") == nil ? 0.92 : d.double(forKey: "widgetOpacity") } set { set("widgetOpacity", newValue) } }
     var widgetsOnTop: Bool { get { d.object(forKey: "widgetsOnTop") == nil ? true : d.bool(forKey: "widgetsOnTop") } set { set("widgetsOnTop", newValue) } }
 
+    // --- globalny skrót klawiszowy
+    var hotkeyEnabled: Bool { get { d.object(forKey: "hotkeyEnabled") == nil ? true : d.bool(forKey: "hotkeyEnabled") } set { set("hotkeyEnabled", newValue) } }
+    /// indeks kombinacji z HotkeyCombo
+    var hotkeyCombo: Int { get { d.integer(forKey: "hotkeyCombo") } set { set("hotkeyCombo", newValue) } }
+
     // --- praca w tle i uruchamianie
     /// zamknięcie okna nie kończy aplikacji – zostaje w pasku menu
     var keepRunning: Bool { get { d.object(forKey: "keepRunning") == nil ? true : d.bool(forKey: "keepRunning") } set { set("keepRunning", newValue) } }

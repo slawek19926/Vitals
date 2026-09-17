@@ -24,6 +24,9 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Skrót globalny", "Global shortcut"),
+        ("Kombinacja", "Combination"),
+        ("Skrót pokazuje okno Vitals z dowolnej aplikacji, a gdy okno jest na wierzchu – chowa je. Działa tylko przy uruchomionej aplikacji, więc warto włączyć start po zalogowaniu.", "The shortcut shows the Vitals window from any app, and hides it when the window is already in front. It only works while the app is running, so launching at login is worth enabling."),
         ("Zakres czasu mini wykresów", "Mini graph time range"),
         ("Ile historii mieści wykres przy pozycji w pasku menu.", "How much history the graph next to a menu bar item holds."),
         ("Wyłączony", "Off"),

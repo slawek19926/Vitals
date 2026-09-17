@@ -6,6 +6,8 @@ import HelperKit
 @main
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var windowController: MainWindowController!
+    /// okno główne dla skrótu globalnego
+    var mainWindow: NSWindow? { windowController?.window }
     private var statusItem: StatusItemController!
 
     static func main() {
@@ -23,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         windowController.showWindow(nil)
         statusItem = StatusItemController()
         WidgetManager.shared.restore()
+        Hotkey.shared.apply()
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.willCloseNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.didBecomeKeyNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: .widgetsChanged, object: nil)

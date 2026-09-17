@@ -25,6 +25,8 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let langPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let updateSwitch = NSSwitch()
     private let loginSwitch = NSSwitch()
+    private let hotkeySwitch = NSSwitch()
+    private let hotkeyPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let menuBarSpanPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var menuBarPopups: [WidgetKind: NSPopUpButton] = [:]
@@ -199,6 +201,15 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         startPagePopup.selectItem(at: prefs.startPage)
         startPagePopup.target = self; startPagePopup.action = #selector(startPageChanged)
         row(start, "Strona startowa", startPagePopup)
+        hotkeySwitch.state = prefs.hotkeyEnabled ? .on : .off
+        hotkeySwitch.target = self; hotkeySwitch.action = #selector(hotkeyChanged)
+        row(start, "Skrót globalny", hotkeySwitch,
+            hint: "Skrót pokazuje okno Vitals z dowolnej aplikacji, a gdy okno jest na wierzchu – chowa je. Działa tylko przy uruchomionej aplikacji, więc warto włączyć start po zalogowaniu.")
+        hotkeyPopup.addItems(withTitles: HotkeyCombo.allCases.map { $0.title })
+        hotkeyPopup.selectItem(at: min(prefs.hotkeyCombo, HotkeyCombo.allCases.count - 1))
+        hotkeyPopup.target = self; hotkeyPopup.action = #selector(hotkeyChanged)
+        row(start, "Kombinacja", hotkeyPopup)
+
         loginSwitch.state = LoginItem.isEnabled ? .on : .off
         loginSwitch.target = self; loginSwitch.action = #selector(loginItemChanged)
         row(start, "Uruchamiaj po zalogowaniu", loginSwitch,
@@ -417,6 +428,13 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         prefs.widgetsOnTop = onTopSwitch.state == .on
         prefs.widgetOpacity = opacitySlider.doubleValue
         WidgetManager.shared.applyPrefs()
+    }
+
+    @objc private func hotkeyChanged() {
+        prefs.hotkeyEnabled = hotkeySwitch.state == .on
+        prefs.hotkeyCombo = hotkeyPopup.indexOfSelectedItem
+        Hotkey.shared.apply()
+        hotkeyPopup.isEnabled = prefs.hotkeyEnabled
     }
 
     @objc private func keepRunningChanged() { prefs.keepRunning = backgroundSwitch.state == .on }
