@@ -11,8 +11,11 @@ enum MenuBarStyle: Int, CaseIterable {
 final class MenuBarModule {
     let kind: WidgetKind
     let item: NSStatusItem
-    private var history: [Double] = []
-    private let historyLimit = 40
+    /// Kolumny wykresu: każda obejmuje wycinek czasu, dzięki czemu okno nie zależy od kroku próbkowania
+    private var buckets: [Double] = []
+    private var bucketPeak: Double = 0
+    private var bucketStart = Date()
+    private let bucketCount = 40
 
     /// Panel otwierany kliknięciem tej pozycji – jeden na moduł
     let popover = NSPopover()
@@ -55,13 +58,31 @@ final class MenuBarModule {
     func update(_ s: Snapshot) {
         guard let b = item.button else { return }
         let style = MenuBarStyle(rawValue: Prefs.shared.menuBarStyle) ?? .both
-        history.append(kind.menuBarValue(s))
-        if history.count > historyLimit { history.removeFirst(history.count - historyLimit) }
+        pushSample(kind.menuBarValue(s))
 
-        b.title = style == .graphOnly ? "" : " " + kind.menuBarText(s)
+        if style == .graphOnly {
+            b.attributedTitle = NSAttributedString(string: "")
+        } else {
+            // kolor zależny od poziomu: spokojny akcent, ostrzeżenie, wartość krytyczna
+            b.attributedTitle = NSAttributedString(string: " " + kind.menuBarText(s), attributes: [
+                .font: Fonts.mono(10.5, weight: .medium),
+                .foregroundColor: kind.menuBarColor(s),
+            ])
+        }
         b.alignment = .left
         b.image = style == .valueOnly ? symbolImage() : sparkline()
         b.imageHugsTitle = true
+    }
+
+    /// Zbiera pomiary w kolumnach o stałym czasie trwania (okno z ustawień / liczba kolumn)
+    private func pushSample(_ v: Double) {
+        bucketPeak = max(bucketPeak, v)
+        let slice = max(0.2, Prefs.shared.menuBarSpanSeconds / Double(bucketCount))
+        guard Date().timeIntervalSince(bucketStart) >= slice else { return }
+        buckets.append(bucketPeak)
+        if buckets.count > bucketCount { buckets.removeFirst(buckets.count - bucketCount) }
+        bucketPeak = v
+        bucketStart = Date()
     }
 
     /// Ikona modułu, gdy wykres jest wyłączony
@@ -75,22 +96,25 @@ final class MenuBarModule {
     private func sparkline() -> NSImage {
         let size = NSSize(width: 34, height: 16)
         let img = NSImage(size: size)
-        guard history.count > 1 else { return img }
-        let maxV = kind.isPercent ? 100 : max(history.max() ?? 1, 1)
+        // ostatnia, jeszcze zbierana kolumna dorysowana na końcu – wykres zawsze dochodzi do prawej krawędzi
+        let points = buckets + [bucketPeak]
+        guard points.count > 1 else { return img }
+        let maxV = kind.isPercent ? 100 : max(points.max() ?? 1, 1)
         img.lockFocus()
         let color = P.accent(kind.accent)
         let path = NSBezierPath()
-        let stepX = size.width / CGFloat(max(1, historyLimit - 1))
-        let firstIndex = historyLimit - history.count
-        for (i, v) in history.enumerated() {
-            let x = CGFloat(firstIndex + i) * stepX
+        let stepX = size.width / CGFloat(max(1, bucketCount))
+        // rysujemy od prawej: najnowsza kolumna na krawędzi, starsze w lewo
+        let firstX = size.width - CGFloat(points.count - 1) * stepX
+        for (i, v) in points.enumerated() {
+            let x = firstX + CGFloat(i) * stepX
             let y = 1 + CGFloat(min(1, max(0, v / maxV))) * (size.height - 3)
             if i == 0 { path.move(to: NSPoint(x: x, y: y)) } else { path.line(to: NSPoint(x: x, y: y)) }
         }
         // wypełnienie pod linią, żeby wykres był czytelny przy 16 punktach wysokości
         let fill = path.copy() as! NSBezierPath
-        fill.line(to: NSPoint(x: CGFloat(historyLimit - 1) * stepX, y: 0))
-        fill.line(to: NSPoint(x: CGFloat(firstIndex) * stepX, y: 0))
+        fill.line(to: NSPoint(x: size.width, y: 0))
+        fill.line(to: NSPoint(x: max(0, firstX), y: 0))
         fill.close()
         color.withAlphaComponent(0.25).setFill()
         fill.fill()

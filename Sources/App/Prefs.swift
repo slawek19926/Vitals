@@ -113,6 +113,8 @@ final class Prefs {
     }
     /// moduły z rozbudowanym panelem (pełne listy odczytów zamiast skrótu)
     var menuBarDetailed: [String] { get { d.stringArray(forKey: "menuBarDetailed") ?? [] } set { set("menuBarDetailed", newValue) } }
+    /// ile sekund historii mieści mini wykres w pasku menu
+    var menuBarSpanSeconds: Double { get { d.object(forKey: "menuBarSpanSeconds") == nil ? 60 : d.double(forKey: "menuBarSpanSeconds") } set { set("menuBarSpanSeconds", newValue) } }
     /// 0 = wartość, 1 = wykres, 2 = wartość i wykres
     var menuBarStyle: Int { get { d.object(forKey: "menuBarStyle") == nil ? 2 : d.integer(forKey: "menuBarStyle") } set { set("menuBarStyle", newValue) } }
 

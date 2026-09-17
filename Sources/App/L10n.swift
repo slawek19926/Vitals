@@ -24,6 +24,8 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Zakres czasu mini wykresów", "Mini graph time range"),
+        ("Ile historii mieści wykres przy pozycji w pasku menu.", "How much history the graph next to a menu bar item holds."),
         ("Wyłączony", "Off"),
         ("Prosty", "Simple"),
         ("Zaawansowany", "Advanced"),

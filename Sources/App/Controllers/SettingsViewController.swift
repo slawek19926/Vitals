@@ -26,6 +26,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let updateSwitch = NSSwitch()
     private let loginSwitch = NSSwitch()
     private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let menuBarSpanPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var menuBarPopups: [WidgetKind: NSPopUpButton] = [:]
     private let backgroundSwitch = NSSwitch()
     private let onTopSwitch = NSSwitch()
@@ -143,6 +144,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         menuBarStylePopup.addItems(withTitles: MenuBarStyle.allCases.map { $0.title })
         menuBarStylePopup.selectItem(at: min(prefs.menuBarStyle, MenuBarStyle.allCases.count - 1))
         menuBarStylePopup.target = self; menuBarStylePopup.action = #selector(menuBarStyleChanged)
+        menuBarSpanPopup.addItems(withTitles: ["30 s", "1 min", "2 min", "5 min"])
+        menuBarSpanPopup.selectItem(at: [30.0, 60, 120, 300].firstIndex(of: prefs.menuBarSpanSeconds) ?? 1)
+        menuBarSpanPopup.target = self; menuBarSpanPopup.action = #selector(menuBarSpanChanged)
+        row(bars, "Zakres czasu mini wykresów", menuBarSpanPopup,
+            hint: "Ile historii mieści wykres przy pozycji w pasku menu.")
         row(bars, "Wygląd pozycji", menuBarStylePopup,
             hint: "Wartość, mini wykres albo oba naraz w samym pasku. Prosty panel pokazuje skrót metryki, zaawansowany pełne listy odczytów (rdzenie, czujniki, klucze SMC, interfejsy).")
         statusSwitch.state = prefs.showStatusBar ? .on : .off
@@ -388,6 +394,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         var detailed = Set(prefs.menuBarDetailed)
         if mode == 2 { detailed.insert(id) } else { detailed.remove(id) }
         prefs.menuBarDetailed = detailed.sorted()
+        NotificationCenter.default.post(name: .prefsChanged, object: nil)
+    }
+
+    @objc private func menuBarSpanChanged() {
+        prefs.menuBarSpanSeconds = [30.0, 60, 120, 300][min(menuBarSpanPopup.indexOfSelectedItem, 3)]
         NotificationCenter.default.post(name: .prefsChanged, object: nil)
     }
 

@@ -51,6 +51,23 @@ enum WidgetKind: String, CaseIterable {
         }
     }
 
+    /// Kolor wartości w pasku menu: akcent podsystemu, a przy wysokich odczytach ostrzeżenie i alarm
+    func menuBarColor(_ s: Snapshot) -> NSColor {
+        let level: Double?
+        switch self {
+        case .cpu: level = s.cpu.total / 100
+        case .memory: level = s.mem.total > 0 ? Double(s.mem.used) / Double(s.mem.total) : nil
+        case .gpu: level = s.gpuUtil.map { $0 / 100 }
+        case .temperature: level = s.hotspot.map { ($0 - 45) / 55 }     // 45 °C spokojnie, 100 °C krytycznie
+        case .power: level = s.sysWatts.map { $0 / 45 }
+        case .network, .disk: level = nil                                // bez sensownego progu
+        }
+        guard let l = level else { return P.accent(accent) }
+        if l >= 0.85 { return P.bad }
+        if l >= 0.65 { return P.warn }
+        return P.accent(accent)
+    }
+
     /// Stała szerokość napisu w pasku menu (znaki są monospace, więc pozycja nie skacze)
     var menuBarWidth: CGFloat {
         switch self {
