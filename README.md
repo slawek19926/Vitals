@@ -9,6 +9,7 @@
 [![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)](https://developer.apple.com/documentation/appkit)
 [![Apple silicon](https://img.shields.io/badge/Apple%20silicon-natywnie-success)](#)
 [![Zero dependencies](https://img.shields.io/badge/zale%C5%BCno%C5%9Bci-brak-lightgrey)](#)
+[![MIT](https://img.shields.io/badge/licencja-MIT-blue)](LICENSE)
 
 </div>
 
@@ -109,6 +110,10 @@ Pomiary chodzą w tle na własnej kolejce (domyślnie 10 razy na sekundę dla ta
 ## Prywatność
 
 Aplikacja nie wysyła nigdzie żadnych danych. Jedyne połączenie sieciowe to sprawdzenie najnowszego wydania w API GitHuba — można je wyłączyć w Ustawieniach.
+
+## Licencja
+
+[MIT](LICENSE) — rób z tym, co chcesz, zachowując informację o autorstwie.
 
 ---
 
