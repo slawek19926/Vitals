@@ -83,6 +83,7 @@ final class ModulePopoverController: NSViewController {
         for b in [open, settings, quit] { b.bezelStyle = .rounded; b.controlSize = .small; b.font = Fonts.ui(11.5) }
 
         var content: [NSView] = [head, caption, graph]
+        var scrollView: NSScrollView?
         if detailed {
             let scroll = NSScrollView()
             scroll.drawsBackground = false
@@ -91,17 +92,11 @@ final class ModulePopoverController: NSViewController {
             scroll.autohidesScrollers = true
             let doc = FlippedView()
             scroll.documentView = doc
-            detailStack.translatesAutoresizingMaskIntoConstraints = false
-            doc.addSubview(detailStack)
-            NSLayoutConstraint.activate([
-                detailStack.leadingAnchor.constraint(equalTo: doc.leadingAnchor),
-                detailStack.trailingAnchor.constraint(equalTo: doc.trailingAnchor),
-                detailStack.topAnchor.constraint(equalTo: doc.topAnchor),
-                detailStack.bottomAnchor.constraint(equalTo: doc.bottomAnchor),
-                doc.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
-            ])
-            scroll.heightAnchor.constraint(lessThanOrEqualToConstant: 460).isActive = true
-            scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 220).isActive = true
+            detailStack.pin(to: doc, insets: NSEdgeInsets(top: 0, left: 0, bottom: 8, right: 0))
+            doc.translatesAutoresizingMaskIntoConstraints = false
+            doc.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
+            scroll.heightAnchor.constraint(equalToConstant: 420).isActive = true
+            scrollView = scroll
             content.append(scroll)
         } else {
             content += [kv, listTitle, list]
@@ -115,8 +110,10 @@ final class ModulePopoverController: NSViewController {
             stack.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -14),
             stack.topAnchor.constraint(equalTo: root.topAnchor, constant: 12),
             stack.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -12),
-            root.widthAnchor.constraint(equalToConstant: 330),
+            root.widthAnchor.constraint(equalToConstant: detailed ? 360 : 330),
         ])
+        // widok przewijany musi dostać szerokość ze stosu, inaczej zwija się do zera
+        if let scrollView { scrollView.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true }
 
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
     }
