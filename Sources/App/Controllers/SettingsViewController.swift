@@ -17,7 +17,6 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private var refreshPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var historyPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var pixelsPopup = NSPopUpButton(frame: .zero, pullsDown: false)
-    private var menuBarPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var exitedPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var startPagePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let smoothSwitch = NSSwitch(), statusSwitch = NSSwitch(), flashSwitch = NSSwitch()
@@ -25,6 +24,14 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let stylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let langPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let updateSwitch = NSSwitch()
+    private let loginSwitch = NSSwitch()
+    private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private var menuBarSwitches: [WidgetKind: NSSwitch] = [:]
+    private let backgroundSwitch = NSSwitch()
+    private let onTopSwitch = NSSwitch()
+    private let opacitySlider = NSSlider()
+    private var widgetSwitches: [WidgetKind: NSSwitch] = [:]
+    private let loginStatus = Label.make("", size: 10.5, dim: true)
     private let alertsSwitch = NSSwitch(), notifySwitch = NSSwitch(), soundSwitch = NSSwitch()
     private let tempField = NSTextField(), cpuField = NSTextField(), swapField = NSTextField()
     private let spaceField = NSTextField(), batteryField = NSTextField(), procField = NSTextField()
@@ -122,10 +129,20 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         }
 
         let bars = section("Pasek menu i pasek stanu", icon: "menubar.rectangle")
-        menuBarPopup.addItems(withTitles: ["Wyłączona", "CPU", "CPU + RAM", "CPU + RAM + temperatura", "Moc systemu"].map { L($0) })
-        menuBarPopup.selectItem(at: prefs.menuBarItem)
-        menuBarPopup.target = self; menuBarPopup.action = #selector(menuBarChanged)
-        row(bars, "Ikona w pasku menu", menuBarPopup, hint: "Pokazuje bieżące wartości w pasku menu macOS, także gdy okno jest schowane.")
+        // każda metryka to osobna pozycja w pasku menu, jak w Stats
+        for kind in WidgetKind.allCases {
+            let sw = NSSwitch()
+            sw.state = prefs.menuBarModules.contains(kind.rawValue) ? .on : .off
+            sw.tag = WidgetKind.allCases.firstIndex(of: kind) ?? 0
+            sw.target = self; sw.action = #selector(menuBarModuleToggled(_:))
+            menuBarSwitches[kind] = sw
+            row(bars, kind.title, sw)
+        }
+        menuBarStylePopup.addItems(withTitles: MenuBarStyle.allCases.map { $0.title })
+        menuBarStylePopup.selectItem(at: min(prefs.menuBarStyle, MenuBarStyle.allCases.count - 1))
+        menuBarStylePopup.target = self; menuBarStylePopup.action = #selector(menuBarStyleChanged)
+        row(bars, "Wygląd pozycji", menuBarStylePopup,
+            hint: "Wartość, mini wykres albo oba naraz. Lewy przycisk otwiera panel z wykresami, prawy menu.")
         statusSwitch.state = prefs.showStatusBar ? .on : .off
         statusSwitch.target = self; statusSwitch.action = #selector(statusChanged)
         row(bars, "Pokaż pasek stanu", statusSwitch)
@@ -174,6 +191,38 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         startPagePopup.selectItem(at: prefs.startPage)
         startPagePopup.target = self; startPagePopup.action = #selector(startPageChanged)
         row(start, "Strona startowa", startPagePopup)
+        loginSwitch.state = LoginItem.isEnabled ? .on : .off
+        loginSwitch.target = self; loginSwitch.action = #selector(loginItemChanged)
+        row(start, "Uruchamiaj po zalogowaniu", loginSwitch,
+            hint: "System uruchamia Vitals w tle po zalogowaniu. Pozycję można też cofnąć w Ustawieniach systemowych → Ogólne → Elementy logowania.")
+        loginStatus.stringValue = L("Stan") + ": " + LoginItem.statusText
+        start.add(loginStatus)
+        backgroundSwitch.state = prefs.keepRunning ? .on : .off
+        backgroundSwitch.target = self; backgroundSwitch.action = #selector(keepRunningChanged)
+        row(start, "Działaj dalej po zamknięciu okna", backgroundSwitch,
+            hint: "Zamknięcie okna zostawia aplikację w pasku menu i nie przerywa pomiarów. Bez okna próbkowanie zwalnia do jednego pomiaru na sekundę.")
+
+        // --- panele na pulpicie
+        let widgets = section("Panele na pulpicie", icon: "square.on.square")
+        for kind in WidgetKind.allCases {
+            let sw = NSSwitch()
+            sw.state = WidgetManager.shared.isEnabled(kind) ? .on : .off
+            sw.target = self; sw.action = #selector(widgetToggled(_:))
+            sw.tag = WidgetKind.allCases.firstIndex(of: kind) ?? 0
+            widgetSwitches[kind] = sw
+            row(widgets, kind.title, sw)
+        }
+        onTopSwitch.state = prefs.widgetsOnTop ? .on : .off
+        onTopSwitch.target = self; onTopSwitch.action = #selector(widgetPrefsChanged)
+        row(widgets, "Zawsze na wierzchu", onTopSwitch,
+            hint: "Panele leżą nad innymi oknami. Wyłączone – chowają się za aktywnym oknem.")
+        opacitySlider.minValue = 0.35; opacitySlider.maxValue = 1
+        opacitySlider.doubleValue = prefs.widgetOpacity
+        opacitySlider.target = self; opacitySlider.action = #selector(widgetPrefsChanged)
+        opacitySlider.controlSize = .small
+        opacitySlider.widthAnchor.constraint(equalToConstant: 160).isActive = true
+        row(widgets, "Przezroczystość", opacitySlider,
+            hint: "Panel staje się w pełni widoczny, gdy najedziesz na niego kursorem. Przeciągasz go za tło, a zamykasz krzyżykiem w rogu.")
 
         let about = section("O programie", icon: "info.circle")
         let versionRow = KeyValueRow("Wersja", "\(AppVersion.full) (zbudowano \(AppVersion.buildDate))", keyWidth: 220)
@@ -198,6 +247,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
             ("Pasek menu", "menubar.rectangle", [bars]),
             ("Procesy i tabele", "list.bullet.rectangle", [procs]),
             ("Pomocnik i uprawnienia", "lock.shield", [helper, perm]),
+            ("Panele na pulpicie", "square.on.square", [widgets]),
             ("Uruchamianie", "power", [start]),
             ("O programie", "info.circle", [about]),
         ]
@@ -323,6 +373,51 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
 
     @objc private func checkUpdatesNow() { Updater.shared.check(userInitiated: true) }
 
+    @objc private func menuBarModuleToggled(_ sender: NSSwitch) {
+        let kinds = WidgetKind.allCases
+        guard sender.tag < kinds.count else { return }
+        let id = kinds[sender.tag].rawValue
+        // kolejność listy = kolejność pozycji w pasku menu
+        var list = prefs.menuBarModules.filter { $0 != id }
+        if sender.state == .on {
+            list = kinds.map { $0.rawValue }.filter { list.contains($0) || $0 == id }
+        }
+        prefs.menuBarModules = list
+        NotificationCenter.default.post(name: .prefsChanged, object: nil)
+    }
+
+    @objc private func menuBarStyleChanged() {
+        prefs.menuBarStyle = menuBarStylePopup.indexOfSelectedItem
+        NotificationCenter.default.post(name: .prefsChanged, object: nil)
+    }
+
+    @objc private func widgetToggled(_ sender: NSSwitch) {
+        let kinds = WidgetKind.allCases
+        guard sender.tag < kinds.count else { return }
+        WidgetManager.shared.setEnabled(kinds[sender.tag], sender.state == .on)
+    }
+
+    @objc private func widgetPrefsChanged() {
+        prefs.widgetsOnTop = onTopSwitch.state == .on
+        prefs.widgetOpacity = opacitySlider.doubleValue
+        WidgetManager.shared.applyPrefs()
+    }
+
+    @objc private func keepRunningChanged() { prefs.keepRunning = backgroundSwitch.state == .on }
+
+    @objc private func loginItemChanged() {
+        if let error = LoginItem.set(loginSwitch.state == .on) {
+            let a = NSAlert()
+            a.messageText = L("Nie udało się zmienić uruchamiania po zalogowaniu")
+            a.informativeText = error
+            a.addButton(withTitle: "OK")
+            a.runModal()
+        }
+        loginSwitch.state = LoginItem.isEnabled ? .on : .off
+        loginStatus.stringValue = L("Stan") + ": " + LoginItem.statusText
+        if LoginItem.needsApproval { LoginItem.openSystemSettings() }
+    }
+
     @objc private func languageChanged() {
         guard prefs.language != langPopup.indexOfSelectedItem else { return }
         prefs.language = langPopup.indexOfSelectedItem
@@ -368,7 +463,6 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     @objc private func spanChanged() { prefs.graphSpanSeconds = [10, 20, 30, 60, 120, 300][spanPopup.indexOfSelectedItem] }
     @objc private func crossfadeChanged() { prefs.crossfadeValues = crossfadeSwitch.state == .on }
     @objc private func historyChanged() { prefs.history = [60, 120, 240, 600][historyPopup.indexOfSelectedItem] }
-    @objc private func menuBarChanged() { prefs.menuBarItem = menuBarPopup.indexOfSelectedItem }
     @objc private func statusChanged() { prefs.showStatusBar = statusSwitch.state == .on }
     @objc private func flashChanged() { prefs.flashChanges = flashSwitch.state == .on }
     @objc private func exitedChanged() { prefs.showExited = exitedSwitch.state == .on }

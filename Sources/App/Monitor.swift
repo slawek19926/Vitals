@@ -466,10 +466,20 @@ final class Monitor {
         }
     }
 
+    /// Tryb tła: rzadsze próbkowanie, gdy okno jest schowane i nie ma pływających paneli
+    var background = false {
+        didSet { if background != oldValue { start() } }
+    }
+
+    /// Krok próbkowania z uwzględnieniem trybu tła (nie nadpisuje ustawienia użytkownika)
+    private var activeInterval: TimeInterval {
+        background ? max(interval, Prefs.shared.backgroundInterval) : interval
+    }
+
     func start() {
         timer?.cancel()
         let t = DispatchSource.makeTimerSource(queue: queue)
-        t.schedule(deadline: .now() + 0.2, repeating: interval, leeway: .milliseconds(20))
+        t.schedule(deadline: .now() + 0.2, repeating: activeInterval, leeway: .milliseconds(background ? 200 : 20))
         t.setEventHandler { [weak self] in self?.sample() }
         t.resume()
         timer = t
@@ -480,7 +490,7 @@ final class Monitor {
     /// Zleca w tle kosztowne odczyty, których wyniki trafiają do pól używanych przez `sample()`
     private func scheduleAux(_ now: Date) {
         guard !auxBusy else { return }
-        let sensorsHot = sensorsInUse > 0 || Prefs.shared.menuBarItem >= 3
+        let sensorsHot = sensorsInUse > 0 || Prefs.shared.menuBarModules.contains("temperature") || Prefs.shared.widgets.contains("temperature")
         let needPower = now.timeIntervalSince(lastPowerAt) >= 0.9 || lastSMCPower.sysWatts == 0
         let needTemps = now.timeIntervalSince(lastTempAt) >= (sensorsHot ? 2.4 : 8.0) || lastTemps.isEmpty
         let needKeys = now.timeIntervalSince(lastKeysAt) >= (sensorsHot ? 2.8 : 12.0) || lastPower.isEmpty

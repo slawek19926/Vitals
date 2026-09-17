@@ -96,6 +96,35 @@ final class Prefs {
     var showExited: Bool { get { d.object(forKey: "showExited") == nil ? true : d.bool(forKey: "showExited") } set { set("showExited", newValue) } }
     var startPage: Int { get { d.integer(forKey: "startPage") } set { set("startPage", newValue) } }
 
+    // --- moduły w pasku menu (jak w Stats: osobna pozycja na metrykę)
+    var menuBarModules: [String] {
+        get {
+            if let list = d.stringArray(forKey: "menuBarModules") { return list }
+            // migracja ze starego trybu 0…4
+            switch d.integer(forKey: "menuBarItem") {
+            case 1: return ["cpu"]
+            case 2: return ["cpu", "memory"]
+            case 3: return ["cpu", "memory", "temperature"]
+            case 4: return ["power"]
+            default: return []
+            }
+        }
+        set { set("menuBarModules", newValue) }
+    }
+    /// 0 = wartość, 1 = wykres, 2 = wartość i wykres
+    var menuBarStyle: Int { get { d.object(forKey: "menuBarStyle") == nil ? 2 : d.integer(forKey: "menuBarStyle") } set { set("menuBarStyle", newValue) } }
+
+    // --- pływające panele na pulpicie
+    var widgets: [String] { get { d.stringArray(forKey: "widgets") ?? [] } set { set("widgets", newValue) } }
+    var widgetOpacity: Double { get { d.object(forKey: "widgetOpacity") == nil ? 0.92 : d.double(forKey: "widgetOpacity") } set { set("widgetOpacity", newValue) } }
+    var widgetsOnTop: Bool { get { d.object(forKey: "widgetsOnTop") == nil ? true : d.bool(forKey: "widgetsOnTop") } set { set("widgetsOnTop", newValue) } }
+
+    // --- praca w tle i uruchamianie
+    /// zamknięcie okna nie kończy aplikacji – zostaje w pasku menu
+    var keepRunning: Bool { get { d.object(forKey: "keepRunning") == nil ? true : d.bool(forKey: "keepRunning") } set { set("keepRunning", newValue) } }
+    /// co ile sekund próbkować, gdy okno jest schowane (0 = bez zmiany)
+    var backgroundInterval: Double { get { d.object(forKey: "backgroundInterval") == nil ? 1.0 : d.double(forKey: "backgroundInterval") } set { set("backgroundInterval", newValue) } }
+
     // --- aktualizacje z wydań GitHuba
     var autoUpdateCheck: Bool { get { d.object(forKey: "autoUpdateCheck") == nil ? true : d.bool(forKey: "autoUpdateCheck") } set { set("autoUpdateCheck", newValue) } }
     var lastUpdateCheck: Double { get { d.double(forKey: "lastUpdateCheck") } set { set("lastUpdateCheck", newValue) } }

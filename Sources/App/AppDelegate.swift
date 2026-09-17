@@ -22,6 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         windowController = MainWindowController()
         windowController.showWindow(nil)
         statusItem = StatusItemController()
+        WidgetManager.shared.restore()
+        NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.willCloseNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.didBecomeKeyNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: .widgetsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(rebuildForLanguage), name: .languageChanged, object: nil)
         Monitor.shared.start()
         NSApp.activate(ignoringOtherApps: true)
@@ -71,7 +75,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         if resp == .alertFirstButtonReturn { relaunchAsAdmin() }
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { Prefs.shared.menuBarItem == 0 }
 
     // MARK: menu
     private func buildMenu() {
@@ -108,6 +111,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         let find = view.addItem(withTitle: L("Szukaj…"), action: #selector(focusSearch), keyEquivalent: "f")
         find.keyEquivalentModifierMask = [.command]
         let side = view.addItem(withTitle: L("Pokaż/ukryj pasek boczny"), action: #selector(toggleSidebar), keyEquivalent: "s")
+        // panele na pulpicie: każdy rodzaj osobno, ptaszek pokazuje stan
+        let widgets = NSMenu(title: L("Panele na pulpicie"))
+        for kind in WidgetKind.allCases {
+            let it = widgets.addItem(withTitle: kind.title, action: #selector(toggleWidget(_:)), keyEquivalent: "")
+            it.representedObject = kind.rawValue
+            it.state = WidgetManager.shared.isEnabled(kind) ? .on : .off
+        }
+        let widgetsItem = view.addItem(withTitle: L("Panele na pulpicie"), action: nil, keyEquivalent: "")
+        widgetsItem.submenu = widgets
         side.keyEquivalentModifierMask = [.command, .control]
         view.addItem(.separator())
         view.addItem(withTitle: L("Odśwież teraz"), action: #selector(refreshNow(_:)), keyEquivalent: "r")
@@ -164,9 +176,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
     @objc func checkForUpdates() { Updater.shared.check(userInitiated: true) }
 
+    /// Zamknięcie okna nie kończy programu, gdy ma zostać w pasku menu albo trzyma panele
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !(Prefs.shared.keepRunning || WidgetManager.shared.anyVisible)
+    }
+
+    /// Kliknięcie ikony w Docku przywraca okno po pracy w tle
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { windowController.showWindow(nil) }
+        return true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) { WidgetManager.shared.saveAll() }
+
+    /// Bez widocznego okna próbkujemy rzadziej – panele i pasek menu nie potrzebują 10 pomiarów na sekundę
+    @objc private func windowVisibilityChanged() {
+        DispatchQueue.main.async { [weak self] in
+            let visible = self?.windowController?.window?.isVisible ?? false
+            Monitor.shared.background = !visible && !WidgetManager.shared.anyVisible
+        }
+    }
+
+    @objc func toggleWidget(_ sender: NSMenuItem) {
+        guard let kind = WidgetKind(rawValue: sender.representedObject as? String ?? "") else { return }
+        WidgetManager.shared.toggle(kind)
+        sender.state = WidgetManager.shared.isEnabled(kind) ? .on : .off
+    }
+
     @objc func openSettings() { windowController.selectPage(windowController.settingsPage) }
     @objc func showMainWindow(_ sender: Any?) { windowController.showWindow(nil); NSApp.activate(ignoringOtherApps: true) }
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showMainWindow(nil); return true }
     @objc func toggleSidebar() { windowController.toggleSidebar() }
     @objc func focusSearch() { windowController.showWindow(nil); windowController.focusSearch() }
     @objc func setAppTheme(_ sender: NSMenuItem) { if let k = AppTheme(rawValue: sender.tag) { ThemeManager.shared.setAppTheme(k) } }

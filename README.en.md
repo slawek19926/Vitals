@@ -47,9 +47,10 @@
 | **System health** | Checks for free space, SMART, battery, thermals, memory, load, zombie processes and security (SIP, FileVault, Gatekeeper, firewall) with an event log. |
 | **Alerts** | Thresholds for temperature, CPU, swap, free space, battery and a single process — with macOS notifications. |
 | **Benchmarks** | Selectable tests: CPU (single core / all cores), memory bandwidth, sequential disk write and read, GPU compute in Metal. Result history and CSV export. |
+| **Panels and menu bar** | Floating desktop panels (CPU, memory, GPU, temperature, network, disks, power) with a live graph, dragging and adjustable opacity. In the menu bar each metric gets its own item — value, mini graph or both; left-click opens a panel with graphs and the busiest processes. |
 | **And the rest** | launchd services with actions, users with their processes, TCP/UDP connections, Bluetooth, startup items, installed apps, drivers and kernel extensions, system and hardware information. |
 
-On top of that: **Polish and English switched on the fly** (no restart), light / dark / monochrome phosphor themes, configurable columns in every table, a menu bar item, measurement history exported to CSV.
+On top of that: **Polish and English switched on the fly** (no restart), **launch at login** and background operation (closing the window leaves the app in the menu bar and slows sampling down), light / dark / monochrome phosphor themes, configurable columns in every table, measurement history exported to CSV.
 
 ## Install
 
