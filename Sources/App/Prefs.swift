@@ -111,6 +111,8 @@ final class Prefs {
         }
         set { set("menuBarModules", newValue) }
     }
+    /// moduły z rozbudowanym panelem (pełne listy odczytów zamiast skrótu)
+    var menuBarDetailed: [String] { get { d.stringArray(forKey: "menuBarDetailed") ?? [] } set { set("menuBarDetailed", newValue) } }
     /// 0 = wartość, 1 = wykres, 2 = wartość i wykres
     var menuBarStyle: Int { get { d.object(forKey: "menuBarStyle") == nil ? 2 : d.integer(forKey: "menuBarStyle") } set { set("menuBarStyle", newValue) } }
 

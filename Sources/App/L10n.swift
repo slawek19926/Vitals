@@ -24,6 +24,21 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Wyłączony", "Off"),
+        ("Prosty", "Simple"),
+        ("Zaawansowany", "Advanced"),
+        ("Wartość, mini wykres albo oba naraz w samym pasku. Prosty panel pokazuje skrót metryki, zaawansowany pełne listy odczytów (rdzenie, czujniki, klucze SMC, interfejsy).", "A value, a mini graph or both in the bar itself. The simple panel shows a summary, the advanced one full lists of readings (cores, sensors, SMC keys, interfaces)."),
+        ("Klucze mocy (P*)", "Power keys (P*)"),
+        ("Napięcie", "Voltage"),
+        ("Prąd", "Current"),
+        ("Woluminy", "Volumes"),
+        ("Razem", "Total"),
+        ("Swap dostępny", "Swap available"),
+        ("Page in", "Page in"),
+        ("Page out", "Page out"),
+        ("Plik wymiany", "Swap file"),
+        ("Kondycja", "Condition"),
+        ("Aplikacje", "Applications"),
         ("Największe procesy (pamięć)", "Largest processes (memory)"),
         ("Dyski fizyczne", "Physical disks"),
         ("Interfejsy", "Interfaces"),

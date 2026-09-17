@@ -26,7 +26,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let updateSwitch = NSSwitch()
     private let loginSwitch = NSSwitch()
     private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
-    private var menuBarSwitches: [WidgetKind: NSSwitch] = [:]
+    private var menuBarPopups: [WidgetKind: NSPopUpButton] = [:]
     private let backgroundSwitch = NSSwitch()
     private let onTopSwitch = NSSwitch()
     private let opacitySlider = NSSlider()
@@ -131,18 +131,20 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         let bars = section("Pasek menu i pasek stanu", icon: "menubar.rectangle")
         // każda metryka to osobna pozycja w pasku menu, jak w Stats
         for kind in WidgetKind.allCases {
-            let sw = NSSwitch()
-            sw.state = prefs.menuBarModules.contains(kind.rawValue) ? .on : .off
-            sw.tag = WidgetKind.allCases.firstIndex(of: kind) ?? 0
-            sw.target = self; sw.action = #selector(menuBarModuleToggled(_:))
-            menuBarSwitches[kind] = sw
-            row(bars, kind.title, sw)
+            let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+            popup.addItems(withTitles: [L("Wyłączony"), L("Prosty"), L("Zaawansowany")])
+            let enabled = prefs.menuBarModules.contains(kind.rawValue)
+            popup.selectItem(at: enabled ? (prefs.menuBarDetailed.contains(kind.rawValue) ? 2 : 1) : 0)
+            popup.tag = WidgetKind.allCases.firstIndex(of: kind) ?? 0
+            popup.target = self; popup.action = #selector(menuBarModuleChanged(_:))
+            menuBarPopups[kind] = popup
+            row(bars, kind.title, popup)
         }
         menuBarStylePopup.addItems(withTitles: MenuBarStyle.allCases.map { $0.title })
         menuBarStylePopup.selectItem(at: min(prefs.menuBarStyle, MenuBarStyle.allCases.count - 1))
         menuBarStylePopup.target = self; menuBarStylePopup.action = #selector(menuBarStyleChanged)
         row(bars, "Wygląd pozycji", menuBarStylePopup,
-            hint: "Wartość, mini wykres albo oba naraz. Lewy przycisk otwiera panel z wykresami, prawy menu.")
+            hint: "Wartość, mini wykres albo oba naraz w samym pasku. Prosty panel pokazuje skrót metryki, zaawansowany pełne listy odczytów (rdzenie, czujniki, klucze SMC, interfejsy).")
         statusSwitch.state = prefs.showStatusBar ? .on : .off
         statusSwitch.target = self; statusSwitch.action = #selector(statusChanged)
         row(bars, "Pokaż pasek stanu", statusSwitch)
@@ -373,16 +375,19 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
 
     @objc private func checkUpdatesNow() { Updater.shared.check(userInitiated: true) }
 
-    @objc private func menuBarModuleToggled(_ sender: NSSwitch) {
+    /// Wyłączony / prosty panel / rozbudowany panel z pełnymi listami odczytów
+    @objc private func menuBarModuleChanged(_ sender: NSPopUpButton) {
         let kinds = WidgetKind.allCases
         guard sender.tag < kinds.count else { return }
         let id = kinds[sender.tag].rawValue
+        let mode = sender.indexOfSelectedItem
         // kolejność listy = kolejność pozycji w pasku menu
         var list = prefs.menuBarModules.filter { $0 != id }
-        if sender.state == .on {
-            list = kinds.map { $0.rawValue }.filter { list.contains($0) || $0 == id }
-        }
+        if mode > 0 { list = kinds.map { $0.rawValue }.filter { list.contains($0) || $0 == id } }
         prefs.menuBarModules = list
+        var detailed = Set(prefs.menuBarDetailed)
+        if mode == 2 { detailed.insert(id) } else { detailed.remove(id) }
+        prefs.menuBarDetailed = detailed.sorted()
         NotificationCenter.default.post(name: .prefsChanged, object: nil)
     }
 

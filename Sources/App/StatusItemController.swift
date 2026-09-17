@@ -20,7 +20,7 @@ final class MenuBarModule {
     init(kind: WidgetKind, target: AnyObject, action: Selector) {
         self.kind = kind
         popover.behavior = .transient
-        popover.contentViewController = ModulePopoverController(kind: kind)
+        popover.contentViewController = ModulePopoverController(kind: kind, detailed: Prefs.shared.menuBarDetailed.contains(kind.rawValue))
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.font = Fonts.mono(10.5, weight: .medium)
         item.button?.imagePosition = .imageLeading
@@ -29,6 +29,14 @@ final class MenuBarModule {
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         item.button?.toolTip = kind.title
         applyLength()
+    }
+
+    /// Przebudowuje panel, gdy zmieni się tryb (prosty ↔ zaawansowany)
+    func applyDetailMode() {
+        let wanted = Prefs.shared.menuBarDetailed.contains(kind.rawValue)
+        guard (popover.contentViewController as? ModulePopoverController)?.detailed != wanted else { return }
+        if popover.isShown { popover.performClose(nil) }
+        popover.contentViewController = ModulePopoverController(kind: kind, detailed: wanted)
     }
 
     /// Szerokość pozycji jest stała – inaczej zmiana liczby przesuwałaby cały pasek
@@ -130,7 +138,7 @@ final class StatusItemController: NSObject {
         for kind in wanted.reversed() where modules[kind] == nil {
             modules[kind] = MenuBarModule(kind: kind, target: self, action: #selector(buttonClicked(_:)))
         }
-        for m in modules.values { m.applyLength() }
+        for m in modules.values { m.applyLength(); m.applyDetailMode() }
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
