@@ -24,6 +24,13 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Zainstaluj akcję szybką…", "Install Quick Action…"),
+        ("Usuń akcję szybką", "Remove Quick Action"),
+        ("Nie udało się zmienić akcji szybkiej", "Could not change the Quick Action"),
+        ("Akcja szybka zainstalowana", "Quick Action installed"),
+        ("Przypisz jej kombinację klawiszy: Ustawienia systemowe → Klawiatura → Skróty klawiszowe → Usługi → Ogólne → „Pokaż Vitals”.", "Assign it a key combination: System Settings → Keyboard → Keyboard Shortcuts → Services → General → “Show Vitals”."),
+        ("Otwórz ustawienia skrótów", "Open shortcut settings"),
+        ("Instaluje akcję szybką „Pokaż Vitals”. Skrót przypisany jej w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta.", "Installs a “Show Vitals” Quick Action. A shortcut assigned to it in System Settings → Keyboard → Keyboard Shortcuts → Services launches the app even when it is fully quit."),
         ("Otwórz skróty systemowe…", "Open system shortcuts…"),
         ("Skrót działający po zamknięciu", "Shortcut that works when quit"),
         ("Vitals udostępnia systemową usługę „Pokaż Vitals”. Przypisany do niej skrót uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta. Kombinację ustawisz w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi → Ogólne.", "Vitals provides a system service called “Show Vitals”. A shortcut assigned to it launches the app even when it is fully quit. Set the combination in System Settings → Keyboard → Keyboard Shortcuts → Services → General."),

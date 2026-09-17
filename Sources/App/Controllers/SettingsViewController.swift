@@ -27,6 +27,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let loginSwitch = NSSwitch()
     private let hotkeySwitch = NSSwitch()
     private let hotkeyPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let quickActionButton = NSButton(title: "", target: nil, action: nil)
     private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let menuBarSpanPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var menuBarPopups: [WidgetKind: NSPopUpButton] = [:]
@@ -210,10 +211,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         hotkeyPopup.target = self; hotkeyPopup.action = #selector(hotkeyChanged)
         row(start, "Kombinacja", hotkeyPopup)
 
-        let serviceBtn = NSButton(title: L("Otwórz skróty systemowe…"), target: self, action: #selector(openServiceShortcuts))
-        serviceBtn.bezelStyle = .rounded; serviceBtn.controlSize = .small; serviceBtn.font = Fonts.ui(11.5)
-        row(start, "Skrót działający po zamknięciu", serviceBtn,
-            hint: "Vitals udostępnia systemową usługę „Pokaż Vitals”. Przypisany do niej skrót uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta. Kombinację ustawisz w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi → Ogólne.")
+        quickActionButton.bezelStyle = .rounded; quickActionButton.controlSize = .small; quickActionButton.font = Fonts.ui(11.5)
+        quickActionButton.target = self; quickActionButton.action = #selector(quickActionToggled)
+        updateQuickActionButton()
+        row(start, "Skrót działający po zamknięciu", quickActionButton,
+            hint: "Instaluje akcję szybką „Pokaż Vitals”. Skrót przypisany jej w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta.")
 
         loginSwitch.state = LoginItem.isEnabled ? .on : .off
         loginSwitch.target = self; loginSwitch.action = #selector(loginItemChanged)
@@ -435,13 +437,30 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         WidgetManager.shared.applyPrefs()
     }
 
-    /// Odświeża bazę usług i otwiera panel skrótów klawiszowych
-    @objc private func openServiceShortcuts() {
-        _ = Shell.status("/System/Library/CoreServices/pbs", ["-flush"], timeout: 10)
-        NSUpdateDynamicServices()
-        if let url = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension?shortcutsServices") {
-            NSWorkspace.shared.open(url)
+    private func updateQuickActionButton() {
+        quickActionButton.title = QuickAction.isInstalled ? L("Usuń akcję szybką") : L("Zainstaluj akcję szybką…")
+    }
+
+    /// Instaluje albo usuwa akcję szybką i kieruje do panelu z przypisaniem klawiszy
+    @objc private func quickActionToggled() {
+        let error = QuickAction.isInstalled ? QuickAction.remove() : QuickAction.install()
+        let installed = QuickAction.isInstalled
+        updateQuickActionButton()
+        let a = NSAlert()
+        if let error {
+            a.messageText = L("Nie udało się zmienić akcji szybkiej")
+            a.informativeText = error
+            a.alertStyle = .warning
+            a.addButton(withTitle: "OK")
+            a.runModal()
+            return
         }
+        guard installed else { return }
+        a.messageText = L("Akcja szybka zainstalowana")
+        a.informativeText = L("Przypisz jej kombinację klawiszy: Ustawienia systemowe → Klawiatura → Skróty klawiszowe → Usługi → Ogólne → „Pokaż Vitals”.")
+        a.addButton(withTitle: L("Otwórz ustawienia skrótów"))
+        a.addButton(withTitle: L("Później"))
+        if a.runModal() == .alertFirstButtonReturn { QuickAction.openShortcutSettings() }
     }
 
     @objc private func hotkeyChanged() {

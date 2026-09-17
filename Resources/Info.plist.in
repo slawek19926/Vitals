@@ -17,17 +17,6 @@
 	<key>NSPrincipalClass</key><string>NSApplication</string>
 	<key>NSHumanReadableCopyright</key><string>© 2026 Sławomir Sendra · GNU GPL v3</string>
 	<key>NSLocationWhenInUseUsageDescription</key><string>macOS wymaga zgody na dostęp do lokalizacji, aby aplikacja mogła pokazać nazwę sieci Wi-Fi (SSID). Położenie nie jest nigdzie wysyłane ani zapisywane.</string>
-	<key>NSServices</key>
-	<array>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict><key>default</key><string>Pokaż Vitals</string></dict>
-			<key>NSMessage</key><string>showVitalsService</string>
-			<key>NSPortName</key><string>Vitals</string>
-			<key>NSKeyEquivalent</key>
-			<dict><key>default</key><string>^$\U001b</string></dict>
-		</dict>
-	</array>
 	<key>SMPrivilegedExecutables</key>
 	<dict>
 		<key>online.equishow.vitals.helper</key>

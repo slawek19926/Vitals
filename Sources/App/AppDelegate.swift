@@ -26,9 +26,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         statusItem = StatusItemController()
         WidgetManager.shared.restore()
         Hotkey.shared.apply()
-        // usługa systemowa „Pokaż Vitals”: skrót przypisany w Ustawieniach systemowych działa też przy zamkniętej aplikacji
-        NSApp.servicesProvider = self
-        NSUpdateDynamicServices()
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.willCloseNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.didBecomeKeyNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: .widgetsChanged, object: nil)
@@ -180,11 +177,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     @objc func selectPage(_ sender: NSMenuItem) {
         windowController.selectPage(sender.tag < 0 ? windowController.settingsPage : sender.tag)
     }
-    /// Wywoływane przez system, gdy użytkownik użyje usługi „Pokaż Vitals”
-    @objc func showVitalsService(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>?) {
-        showMainWindow(nil)
-    }
-
     @objc func checkForUpdates() { Updater.shared.check(userInitiated: true) }
 
     /// Zamknięcie okna nie kończy programu, gdy ma zostać w pasku menu albo trzyma panele
