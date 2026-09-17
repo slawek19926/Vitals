@@ -24,6 +24,10 @@ enum L10n {
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("Otwórz skróty systemowe…", "Open system shortcuts…"),
+        ("Skrót działający po zamknięciu", "Shortcut that works when quit"),
+        ("Vitals udostępnia systemową usługę „Pokaż Vitals”. Przypisany do niej skrót uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta. Kombinację ustawisz w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi → Ogólne.", "Vitals provides a system service called “Show Vitals”. A shortcut assigned to it launches the app even when it is fully quit. Set the combination in System Settings → Keyboard → Keyboard Shortcuts → Services → General."),
+        ("Pokaż Vitals", "Show Vitals"),
         ("Skrót globalny", "Global shortcut"),
         ("Kombinacja", "Combination"),
         ("Skrót pokazuje okno Vitals z dowolnej aplikacji, a gdy okno jest na wierzchu – chowa je. Działa tylko przy uruchomionej aplikacji, więc warto włączyć start po zalogowaniu.", "The shortcut shows the Vitals window from any app, and hides it when the window is already in front. It only works while the app is running, so launching at login is worth enabling."),

@@ -210,6 +210,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         hotkeyPopup.target = self; hotkeyPopup.action = #selector(hotkeyChanged)
         row(start, "Kombinacja", hotkeyPopup)
 
+        let serviceBtn = NSButton(title: L("Otwórz skróty systemowe…"), target: self, action: #selector(openServiceShortcuts))
+        serviceBtn.bezelStyle = .rounded; serviceBtn.controlSize = .small; serviceBtn.font = Fonts.ui(11.5)
+        row(start, "Skrót działający po zamknięciu", serviceBtn,
+            hint: "Vitals udostępnia systemową usługę „Pokaż Vitals”. Przypisany do niej skrót uruchamia aplikację nawet wtedy, gdy jest całkiem zamknięta. Kombinację ustawisz w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi → Ogólne.")
+
         loginSwitch.state = LoginItem.isEnabled ? .on : .off
         loginSwitch.target = self; loginSwitch.action = #selector(loginItemChanged)
         row(start, "Uruchamiaj po zalogowaniu", loginSwitch,
@@ -428,6 +433,15 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         prefs.widgetsOnTop = onTopSwitch.state == .on
         prefs.widgetOpacity = opacitySlider.doubleValue
         WidgetManager.shared.applyPrefs()
+    }
+
+    /// Odświeża bazę usług i otwiera panel skrótów klawiszowych
+    @objc private func openServiceShortcuts() {
+        _ = Shell.status("/System/Library/CoreServices/pbs", ["-flush"], timeout: 10)
+        NSUpdateDynamicServices()
+        if let url = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension?shortcutsServices") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc private func hotkeyChanged() {
