@@ -11,6 +11,8 @@
 [![Zero dependencies](https://img.shields.io/badge/zale%C5%BCno%C5%9Bci-brak-lightgrey)](#)
 [![GPLv3](https://img.shields.io/badge/licencja-GPL--3.0-blue)](LICENSE)
 
+**Polski** · [English](README.en.md)
+
 </div>
 
 <img src="docs/screenshots/summary.png" alt="Podsumowanie: mierniki CPU, GPU, temperatury i RAM, przegląd CPU z jądrem, TOP 15 procesów i wykres pamięci">
