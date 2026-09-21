@@ -2,106 +2,106 @@
 
 # Vitals
 
-### Natywny, open-source monitor systemu dla macOS i Apple Silicon
+### A native, open-source system monitor for macOS and Apple Silicon
 
-CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie systemu — w jednym szybkim, natywnym narzędziu.
+CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and system health — in one fast native app.
 
-**Bez Electrona. Bez telemetrii. Bez zewnętrznych zależności.**
+**No Electron. No telemetry. No third-party dependencies.**
 
-[![Pobierz najnowsze wydanie](https://img.shields.io/badge/Pobierz-najnowsze%20wydanie-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
-[![Dodaj gwiazdkę](https://img.shields.io/badge/★-Dodaj%20gwiazdkę-181717?style=for-the-badge&logo=github)](../../stargazers)
+[![Download latest release](https://img.shields.io/badge/Download-latest%20release-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
+[![Star Vitals](https://img.shields.io/badge/★-Star%20Vitals-181717?style=for-the-badge&logo=github)](../../stargazers)
 
 [![Latest release](https://img.shields.io/github/v/release/slawek19926/Vitals?display_name=tag&sort=semver)](../../releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total?label=pobrania)](../../releases)
-[![GitHub stars](https://img.shields.io/github/stars/slawek19926/Vitals?style=flat&label=gwiazdki)](../../stargazers)
+[![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total)](../../releases)
+[![GitHub stars](https://img.shields.io/github/stars/slawek19926/Vitals?style=flat)](../../stargazers)
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)](https://developer.apple.com/documentation/appkit)
-[![Apple silicon](https://img.shields.io/badge/Apple%20silicon-natywnie-success)](#)
-[![Zero dependencies](https://img.shields.io/badge/zależności-brak-lightgrey)](#)
-[![GPLv3](https://img.shields.io/badge/licencja-GPL--3.0-blue)](LICENSE)
-[![Wsparcie](https://img.shields.io/badge/wsparcie-certyfikat%20Apple-FF5E5B?logo=kofi&logoColor=white)](#wsparcie)
+[![Apple silicon](https://img.shields.io/badge/Apple%20silicon-native-success)](#)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](#)
+[![GPLv3](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+[![Support](https://img.shields.io/badge/support-Apple%20certificate-FF5E5B?logo=kofi&logoColor=white)](#support)
 
-**Polski** · [English](README.en.md)
+**English** · [Polski](README.pl.md)
 
 </div>
 
-> **Dlaczego Vitals?** Dostajesz głębszy wgląd niż w Monitor aktywności: klastry P/E, GPU i Neural Engine, pełne drzewo SMC, per-dysk i per-interfejs monitoring, SMART, energię procesów, benchmarki i diagnostykę zdrowia systemu — bez wysyłania danych poza Maca.
+> **Why Vitals?** It goes deeper than Activity Monitor: P/E clusters, GPU and Neural Engine, the full SMC sensor tree, per-disk and per-interface monitoring, SMART, process energy, benchmarks and system-health diagnostics — without sending your data off the Mac.
 
-<img src="docs/screenshots/summary.png" alt="Podsumowanie: mierniki CPU, GPU, temperatury i RAM, przegląd CPU z jądrem, TOP 15 procesów i wykres pamięci">
+<img src="docs/screenshots/en/summary.png" alt="Summary: CPU, GPU, temperature and RAM meters, CPU overview with kernel time, top 15 processes and a memory graph">
 
 <table>
 <tr>
-<td width="50%"><img src="docs/screenshots/performance.png" alt="Wydajność: lista urządzeń i wykresy na rdzeń"><br><sub><b>Wydajność</b> — każdy rdzeń, dysk i interfejs osobno</sub></td>
-<td width="50%"><img src="docs/screenshots/diskspace.png" alt="Miejsce na dysku: mapa katalogów i pierścień typów plików"><br><sub><b>Miejsce na dysku</b> — treemap z drążeniem i powiększaniem</sub></td>
+<td width="50%"><img src="docs/screenshots/en/performance.png" alt="Performance: device list and per-core graphs"><br><sub><b>Performance</b> — every core, disk and interface on its own</sub></td>
+<td width="50%"><img src="docs/screenshots/en/diskspace.png" alt="Disk space: directory treemap and a file type ring"><br><sub><b>Disk space</b> — treemap with drill-down and zoom</sub></td>
 </tr>
 <tr>
-<td><img src="docs/screenshots/processes.png" alt="Procesy: drzewo z kolumnami CPU, pamięci i energii"><br><sub><b>Procesy</b> — drzewo po PPID, energia, wybudzenia, sygnały</sub></td>
-<td><img src="docs/screenshots/sensors.png" alt="Zasilanie i czujniki: drzewo czujników SMC"><br><sub><b>Zasilanie i czujniki</b> — całe SMC z min/maks</sub></td>
+<td><img src="docs/screenshots/en/processes.png" alt="Processes: tree with CPU, memory and energy columns"><br><sub><b>Processes</b> — PPID tree, energy, wakeups, signals</sub></td>
+<td><img src="docs/screenshots/en/sensors.png" alt="Power and sensors: SMC sensor tree"><br><sub><b>Power &amp; sensors</b> — the whole SMC with min/max</sub></td>
 </tr>
 <tr>
-<td><img src="docs/screenshots/apple-silicon.png" alt="Apple Silicon: klastry rdzeni P i E z wykresami"><br><sub><b>Apple Silicon</b> — klastry P/E, GPU, Neural Engine</sub></td>
-<td><img src="docs/screenshots/health.png" alt="Zdrowie systemu: lista kontroli i dziennik zdarzeń"><br><sub><b>Zdrowie systemu</b> — kontrole, alerty, dziennik</sub></td>
+<td><img src="docs/screenshots/en/apple-silicon.png" alt="Apple Silicon: P and E core clusters with graphs"><br><sub><b>Apple Silicon</b> — P/E clusters, GPU, Neural Engine</sub></td>
+<td><img src="docs/screenshots/en/health.png" alt="System health: list of checks and an alert log"><br><sub><b>System health</b> — checks, alerts, event log</sub></td>
 </tr>
 </table>
 
 ---
 
-## Co potrafi
+## What it does
 
 | | |
 |---|---|
-| **Podsumowanie** | Mierniki CPU / GPU / temperatury / RAM, moc systemu z SMC, TOP 15 procesów i kafelki sieci, dysków oraz zasilania. Wykresy reagują na mysz: najechanie cofa listę procesów do wybranej chwili, przeciągnięcie uśrednia przedział. |
-| **Wydajność** | Osobna pozycja dla każdego urządzenia: rdzenie P/E, pamięć, GPU, Neural Engine, **każdy dysk fizyczny** (typ, architektura NVMe / USB / SATA / czytnik kart, SMART) i **każdy interfejs sieciowy** (Wi-Fi z SSID, Ethernet, hotspot, Bluetooth PAN, tunel VPN z nazwą profilu). |
-| **Procesy** | Drzewo po PPID z ikonami aplikacji, kolumny CPU / pamięć / wątki / dysk R-W / wpływ na energię / wybudzenia, kończenie i sygnały, priorytet (nice), próbkowanie procesu, zakończone podświetlone przez 8 s. |
-| **Zasilanie i czujniki** | Pełne drzewo SMC: temperatury, moce, napięcia, prądy, wentylatory — z wartością, minimum i maksimum, kolorowane według progów Apple silicon. |
-| **Apple Silicon** | Klastry P/E z wykresem per rdzeń, GPU (urządzenie / renderer / tiler), Neural Engine, silnik multimedialny z listą kodeków. |
-| **Miejsce na dysku** | Skanowanie przez `getattrlistbulk` (równolegle), treemap z drążeniem i **powiększaniem**, pierścień kategorii, największe foldery i pliki, usuwanie do Kosza. |
-| **Zdrowie systemu** | Kontrole miejsca, SMART, baterii, termiki, pamięci, obciążenia, procesów zombie i zabezpieczeń (SIP, FileVault, Gatekeeper, zapora) z dziennikiem zdarzeń. |
-| **Alerty** | Progi temperatury, CPU, swapu, wolnego miejsca, baterii i pojedynczego procesu — z powiadomieniami macOS. |
-| **Benchmarki** | Wybierane testy: CPU (jeden rdzeń / wszystkie), przepustowość pamięci, zapis i odczyt dysku, obliczenia GPU w Metalu. Historia wyników i eksport CSV. |
-| **Panele i pasek menu** | Pływające panele na pulpicie (CPU, pamięć, GPU, temperatura, sieć, dyski, zasilanie) z wykresem na żywo, przeciąganiem i regulowaną przezroczystością. W pasku menu osobna pozycja na metrykę — z wartością, mini wykresem albo obojgiem; lewy przycisk otwiera panel z wykresami i najcięższymi procesami. |
-| **Reszta** | Usługi launchd z akcjami, użytkownicy z procesami, połączenia TCP/UDP, Bluetooth, elementy startowe, zainstalowane aplikacje, sterowniki i rozszerzenia jądra, informacje o systemie i sprzęcie. |
+| **Summary** | CPU / GPU / temperature / RAM meters, system power from SMC, top 15 processes and tiles for network, disks and power. The graphs respond to the mouse: hovering rewinds the process list to that moment, dragging averages a range. |
+| **Performance** | A separate entry for every device: P/E cores, memory, GPU, Neural Engine, **each physical disk** (type, architecture — NVMe / USB / SATA / card reader — and SMART) and **each network interface** (Wi-Fi with SSID, Ethernet, hotspot, Bluetooth PAN, VPN tunnel with the profile name). |
+| **Processes** | A PPID tree with app icons, columns for CPU / memory / threads / disk R-W / energy impact / wakeups, quitting and signals, priority (nice), process sampling, exited processes highlighted for 8 s. |
+| **Power & sensors** | The full SMC tree: temperatures, power, voltages, currents, fans — each with current value, minimum and maximum, colored against Apple silicon thresholds. |
+| **Apple Silicon** | P/E clusters with a graph per core, GPU (device / renderer / tiler), Neural Engine, media engine with the codec list. |
+| **Disk space** | Fast scanning through `getattrlistbulk` (in parallel), a treemap with drill-down and **zoom**, a file category ring, largest folders and files, moving items to the Trash. |
+| **System health** | Checks for free space, SMART, battery, thermals, memory, load, zombie processes and security (SIP, FileVault, Gatekeeper, firewall) with an event log. |
+| **Alerts** | Thresholds for temperature, CPU, swap, free space, battery and a single process — with macOS notifications. |
+| **Benchmarks** | Selectable tests: CPU (single core / all cores), memory bandwidth, sequential disk write and read, GPU compute in Metal. Result history and CSV export. |
+| **Panels and menu bar** | Floating desktop panels (CPU, memory, GPU, temperature, network, disks, power) with a live graph, dragging and adjustable opacity. In the menu bar each metric gets its own item — value, mini graph or both; left-click opens a panel with graphs and the busiest processes. |
+| **And the rest** | launchd services with actions, users with their processes, TCP/UDP connections, Bluetooth, startup items, installed apps, drivers and kernel extensions, system and hardware information. |
 
-Dodatkowo: **polski i angielski przełączane w locie** (bez restartu), **uruchamianie po zalogowaniu** i praca w tle (zamknięcie okna zostawia aplikację w pasku menu, a próbkowanie zwalnia), motywy jasny / ciemny / monochromatyczny fosfor, konfigurowalne kolumny w każdej tabeli, eksport historii pomiarów do CSV.
+On top of that: **Polish and English switched on the fly** (no restart), **launch at login** and background operation (closing the window leaves the app in the menu bar and slows sampling down), light / dark / monochrome phosphor themes, configurable columns in every table, measurement history exported to CSV.
 
-## Instalacja
+## Install
 
-Pobierz `Vitals-<wersja>.zip` z [wydań](../../releases/latest), rozpakuj i przenieś **Vitals.app** do `/Applications`.
+Download `Vitals-<version>.zip` from the [releases](../../releases/latest), unpack it and move **Vitals.app** to `/Applications`.
 
-Aplikacja sama sprawdza aktualizacje (raz na dobę i na żądanie z menu **Vitals → Sprawdź aktualizacje…**). Nowa wersja pobiera się dopiero po Twojej zgodzie, a przed instalacją sprawdzany jest podpis, identyfikator zespołu i identyfikator pakietu.
+The app checks for updates on its own (once a day, and on demand from **Vitals → Check for Updates…**). A new version is downloaded only after you agree, and before installing it the signature, team identifier and bundle identifier are verified.
 
-## Uprawnienia
+## Privileges
 
-macOS pokazuje CPU i pamięć procesów innych użytkowników oraz liczniki energii CPU / GPU / Neural Engine tylko procesom z uprawnieniami administratora. Bez nich część pól pokaże „Brak dostępu”. Są dwa sposoby:
+macOS exposes CPU and memory of other users' processes, as well as the CPU / GPU / Neural Engine energy counters, only to processes with administrator privileges. Without them some fields show “No access”. There are two ways around it:
 
-- **Pomocnik uprzywilejowany** (zalecany) — jednorazowa autoryzacja, potem żadnych monitów przy starcie.
-- **Uruchom ponownie jako administrator** — hasło przy każdym uruchomieniu.
+- **Privileged helper** (recommended) — one authorization, then no prompts at launch.
+- **Restart as administrator** — a password every time you start the app.
 
 <details>
-<summary>Jak włączyć pomocnika i co robi</summary>
+<summary>How to enable the helper and what it does</summary>
 
-Pakiet zawiera demona `online.equishow.vitals.helper`. Aplikacja próbuje najpierw `SMAppService` (zatwierdzenie w Elementach logowania), a gdy macOS odrzuci demona podpisanego certyfikatem zespołu osobistego, używa `SMJobBless`: jednorazowa autoryzacja instaluje pomocnika do `/Library/PrivilegedHelperTools`. Pomocnik udostępnia przez XPC pełną listę procesów, odczyty mocy (`powermetrics`) i akcje na usługach launchd. Włączenie: **Ustawienia → Pomocnik i uprawnienia → „Włącz pomocnika…”**, wyłączenie tym samym przyciskiem (usuwa plist i binarkę).
+The bundle ships a daemon called `online.equishow.vitals.helper`. The app first tries `SMAppService` (approval in Login Items); when macOS rejects a daemon signed with a personal team certificate, it falls back to `SMJobBless`: a single authorization installs the helper into `/Library/PrivilegedHelperTools`. Over XPC the helper provides the full process list, power readings (`powermetrics`) and launchd service actions. Enable it in **Settings → Helper and privileges → “Enable helper…”**, disable it with the same button (which removes the plist and the binary).
 
-Do zbudowania pomocnika potrzebny jest certyfikat **Apple Development** (darmowe konto Apple ID wystarczy) — reguły `SMAuthorizedClients` / `SMPrivilegedExecutables` są generowane z OU certyfikatu przy budowaniu:
+Building the helper requires an **Apple Development** certificate (a free Apple ID is enough) — the `SMAuthorizedClients` / `SMPrivilegedExecutables` rules are generated from the certificate's OU at build time:
 
-1. Xcode → Settings… → Accounts → „+” → zaloguj się Apple ID.
-2. Personal Team → Manage Certificates… → „+” → **Apple Development**.
-3. `security find-identity -v -p codesigning` pokaże np. `"Apple Development: Jan Kowalski (ABCDE12345)"`.
-4. `CODESIGN_IDENTITY="Apple Development: Jan Kowalski (ABCDE12345)" ./build.sh`
+1. Xcode → Settings… → Accounts → “+” → sign in with your Apple ID.
+2. Personal Team → Manage Certificates… → “+” → **Apple Development**.
+3. `security find-identity -v -p codesigning` prints e.g. `"Apple Development: Jane Doe (ABCDE12345)"`.
+4. `CODESIGN_IDENTITY="Apple Development: Jane Doe (ABCDE12345)" ./build.sh`
 
-Gdy `security find-identity -v` zgłasza „0 valid identities”, brakuje certyfikatu pośredniego Apple WWDR G3:
+If `security find-identity -v` reports “0 valid identities”, the Apple WWDR G3 intermediate certificate is missing:
 `curl -O https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer && security import AppleWWDRCAG3.cer -k ~/Library/Keychains/login.keychain-db`
 
-Bez certyfikatu pakiet dostaje podpis ad-hoc: aplikacja działa, ale pomocnika nie da się zainstalować.
+Without a certificate the bundle gets an ad-hoc signature: the app runs, but the helper cannot be installed.
 
 </details>
 
-> **Uwaga o licznikach energii**: IOReport „Energy Model” jest na macOS 26/27 zamrożony dla wszystkiego poza narzędziami Apple, także dla roota — bez pomocnika pola mocy CPU / GPU / ANE pokazują „—”. Moc systemu i zasilacza pochodzi z SMC i działa zawsze. Z pomocnikiem aplikacja czyta `powermetrics` i pokazuje moc oraz rzeczywiste taktowanie klastrów P/E i GPU.
+> **A note on energy counters**: on macOS 26/27 the IOReport “Energy Model” is frozen for everything except Apple's own tools, root included — so without the helper the CPU / GPU / ANE power fields show “—”. System and charger power comes from SMC and always works. With the helper the app reads `powermetrics` and shows power plus the real P/E cluster and GPU clocks.
 
-## Budowanie ze źródeł
+## Building from source
 
-Wymagane: Xcode 15+ (Swift 5.9+). Bez zależności zewnętrznych.
+Requires Xcode 15+ (Swift 5.9+). No external dependencies.
 
 ```bash
 git clone https://github.com/slawek19926/Vitals.git
@@ -110,62 +110,62 @@ cd Vitals
 open build/Vitals.app
 ```
 
-Z podpisem (konieczny dla pomocnika) i wydanie na GitHuba:
+Signed build (required for the helper) and publishing a GitHub release:
 
 ```bash
-CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" ./build.sh
-CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" ./release.sh --publish --notes "Opis zmian"
+CODESIGN_IDENTITY="Apple Development: Jane Doe (TEAMID)" ./build.sh
+CODESIGN_IDENTITY="Apple Development: Jane Doe (TEAMID)" ./release.sh --publish --notes "What changed"
 ```
 
-`open Package.swift` otwiera projekt w Xcode (schemat `Vitals`). Punkty przerwania działają zarówno w Swifcie, jak i w C++ w `Sources/SysCore`.
+`open Package.swift` opens the project in Xcode (scheme `Vitals`). Breakpoints work both in Swift and in the C++ under `Sources/SysCore`.
 
-## Jak to działa
+## How it works
 
 ```
-Sources/SysCore    C++17: libproc / sysctl / Mach (procesy, CPU, pamięć), IOKit (dyski, bateria,
-                   GPU, ANE), AppleSMC (temperatury, moce), IOReport (energia). Czyste C API.
-Sources/App        Swift + AppKit: Monitor (próbkowanie w tle), Theme (palety), L10n (tłumaczenia),
-                   SystemHealth, Alerts, HistoryExport, Updater, Views/, Controllers/ (strony).
-Sources/Helper     Pomocnik uprzywilejowany (XPC), Sources/HelperKit – wspólny protokół i wersja.
+Sources/SysCore    C++17: libproc / sysctl / Mach (processes, CPU, memory), IOKit (disks, battery,
+                   GPU, ANE), AppleSMC (temperatures, power), IOReport (energy). Plain C API.
+Sources/App        Swift + AppKit: Monitor (background sampling), Theme (palettes), L10n
+                   (translations), SystemHealth, Alerts, HistoryExport, Updater, Views/, Controllers/.
+Sources/Helper     The privileged helper (XPC), Sources/HelperKit – shared protocol and version.
 ```
 
-Pomiary chodzą w tle na własnej kolejce (domyślnie 10 razy na sekundę dla tanich odczytów, rzadziej dla SMC i XPC), wykresy rysuje Core Animation, a strony odświeżają się tylko gdy są widoczne — dzięki temu aplikacja zjada ułamek rdzenia zamiast go grzać.
+Sampling runs on its own background queue (10 times per second for cheap reads by default, less often for SMC and XPC), graphs are drawn by Core Animation, and pages refresh only while visible — which is why the app uses a fraction of a core instead of heating one up.
 
-`Resources/Version.config` trzyma `MAJOR.MINOR.PATCH.BUILD`; numer kompilacji rośnie przy każdym `./build.sh` i trafia do `Info.plist`, okna „O programie” oraz tagów wydań.
+`Resources/Version.config` holds `MAJOR.MINOR.PATCH.BUILD`; the build number is bumped by every `./build.sh` and lands in `Info.plist`, the About window and release tags.
 
-## Prywatność
+## Privacy
 
-Aplikacja nie wysyła nigdzie żadnych danych. Jedyne połączenie sieciowe to sprawdzenie najnowszego wydania w API GitHuba — można je wyłączyć w Ustawieniach.
+The app sends no data anywhere. Its only network request asks the GitHub API for the latest release — and that can be turned off in Settings.
 
-## Wsparcie
+## Support
 
-Vitals jest darmowy i będzie darmowy. Zbieram natomiast na jedną konkretną rzecz: **konto Apple Developer Program, 99 $ (około 400 zł) rocznie**.
+Vitals is free and will stay free. What I am collecting for is one specific thing: an **Apple Developer Program membership, $99 a year**.
 
-Bez niego wydania są podpisane certyfikatem deweloperskim, więc macOS wita je ostrzeżeniem „Apple nie może sprawdzić, czy aplikacja nie zawiera złośliwego oprogramowania”, a pomocnik uprzywilejowany instaluje się wyłącznie w wersji zbudowanej ze źródeł. Z kontem dostajecie:
+Without it, releases are signed with a development certificate, so macOS greets them with “Apple cannot verify this app is free of malware”, and the privileged helper only installs in a build made from source. With the membership you get:
 
-- wydania podpisane i notaryzowane — otwierają się jednym kliknięciem, bez ostrzeżeń i sztuczek z `xattr`,
-- pomocnika działającego od razu po instalacji gotowej paczki, czyli pełne dane procesów i liczniki mocy bez hasła przy każdym starcie,
-- instalację przez `brew install --cask vitals`, bo Homebrew nie przyjmuje pakietów bez notaryzacji.
+- signed and notarized releases that open with one click, with no warnings and no `xattr` tricks,
+- a helper that works straight from the downloaded package — full process data and power counters without a password at every launch,
+- installation through `brew install --cask vitals`, since Homebrew does not accept packages without notarization.
 
-Każda złotówka idzie wyłącznie na to. Kiedy uzbiera się na rok, kupuję konto i publikuję notaryzowane wydanie; nadwyżka leci na kolejny rok.
+Every contribution goes to that and nothing else. Once a year is covered, I buy the membership and publish a notarized release; anything extra funds the next year.
 
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-wesprzyj-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
 
-Nie masz ochoty wpłacać? Gwiazdka w repozytorium, zgłoszony błąd albo wzmianka u znajomych też pomagają — w zasięgu, nie w kasie, ale pomagają.
+Not in the mood to donate? A star on the repository, a bug report or a word to a friend helps too — with reach rather than money, but it helps.
 
-## Licencja
+## License
 
-© 2026 Sławomir Sendra. Kod jest dostępny na [GNU GPL v3](LICENSE).
+© 2026 Sławomir Sendra. The code is available under the [GNU GPL v3](LICENSE).
 
-- Możesz go używać, badać, zmieniać i rozprowadzać — także we własnych projektach.
-- Rozprowadzając własną wersję, musisz udostępnić jej pełny kod na tej samej licencji. Zamknięty, komercyjny produkt zbudowany na tym kodzie jest niedozwolony.
-- Prawa autorskie pozostają przy autorze, który jako jedyny może wydawać Vitals na innych warunkach (np. wersję płatną albo dystrybucję w Mac App Store, gdzie GPL nie obowiązuje).
-- Nazwa **Vitals**, ikona i certyfikat podpisu nie są objęte licencją kodu. Fork musi wystąpić pod własną nazwą i własnym podpisem; kanał aktualizacji przyjmuje wyłącznie pakiety o zgodnym identyfikatorze zespołu.
+- You may use, study, modify and redistribute it — including in your own projects.
+- If you distribute your own version, you must publish its full source under the same license. A closed, commercial product built on this code is not allowed.
+- Copyright stays with the author, who is the only one able to release Vitals under different terms (for example a paid edition, or distribution through the Mac App Store, where the GPL does not apply).
+- The **Vitals** name, the icon and the signing certificate are not covered by the code license. A fork has to use its own name and its own signature; the update channel accepts only bundles with a matching team identifier.
 
-Chcesz użyć kodu na innych warunkach niż GPL? Napisz do autora.
+Want the code under terms other than the GPL? Write to the author.
 
 ---
 
 <div align="center">
-<sub>Zbudowane w Swifcie i C++ dla macOS na Apple silicon.</sub>
+<sub>Built with Swift and C++ for macOS on Apple silicon.</sub>
 </div>
