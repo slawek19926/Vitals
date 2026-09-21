@@ -2,19 +2,31 @@
 
 # Vitals
 
-**Natywny monitor systemu dla macOS.** Procesy, czujniki, dyski, sieć i zdrowie maszyny w jednym oknie — bez Electrona, bez zależności zewnętrznych, bez telemetrii.
+### Natywny, open-source monitor systemu dla macOS i Apple Silicon
 
+CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie systemu — w jednym szybkim, natywnym narzędziu.
+
+**Bez Electrona. Bez telemetrii. Bez zewnętrznych zależności.**
+
+[![Pobierz najnowsze wydanie](https://img.shields.io/badge/Pobierz-najnowsze%20wydanie-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
+[![Dodaj gwiazdkę](https://img.shields.io/badge/★-Dodaj%20gwiazdkę-181717?style=for-the-badge&logo=github)](../../stargazers)
+
+[![Latest release](https://img.shields.io/github/v/release/slawek19926/Vitals?display_name=tag&sort=semver)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total?label=pobrania)](../../releases)
+[![GitHub stars](https://img.shields.io/github/stars/slawek19926/Vitals?style=flat&label=gwiazdki)](../../stargazers)
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)](https://developer.apple.com/documentation/appkit)
 [![Apple silicon](https://img.shields.io/badge/Apple%20silicon-natywnie-success)](#)
-[![Zero dependencies](https://img.shields.io/badge/zale%C5%BCno%C5%9Bci-brak-lightgrey)](#)
+[![Zero dependencies](https://img.shields.io/badge/zależności-brak-lightgrey)](#)
 [![GPLv3](https://img.shields.io/badge/licencja-GPL--3.0-blue)](LICENSE)
 [![Wsparcie](https://img.shields.io/badge/wsparcie-certyfikat%20Apple-FF5E5B?logo=kofi&logoColor=white)](#wsparcie)
 
 **Polski** · [English](README.en.md)
 
 </div>
+
+> **Dlaczego Vitals?** Dostajesz głębszy wgląd niż w Monitor aktywności: klastry P/E, GPU i Neural Engine, pełne drzewo SMC, per-dysk i per-interfejs monitoring, SMART, energię procesów, benchmarki i diagnostykę zdrowia systemu — bez wysyłania danych poza Maca.
 
 <img src="docs/screenshots/summary.png" alt="Podsumowanie: mierniki CPU, GPU, temperatury i RAM, przegląd CPU z jądrem, TOP 15 procesów i wykres pamięci">
 
