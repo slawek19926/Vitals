@@ -2,8 +2,18 @@
 
 # Vitals
 
-**A native system monitor for macOS.** Processes, sensors, disks, network and machine health in one window — no Electron, no third-party dependencies, no telemetry.
+### A native, open-source system monitor for macOS and Apple Silicon
 
+CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and system health — in one fast native app.
+
+**No Electron. No telemetry. No third-party dependencies.**
+
+[![Download latest release](https://img.shields.io/badge/Download-latest%20release-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
+[![Star Vitals](https://img.shields.io/badge/★-Star%20Vitals-181717?style=for-the-badge&logo=github)](../../stargazers)
+
+[![Latest release](https://img.shields.io/github/v/release/slawek19926/Vitals?display_name=tag&sort=semver)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total)](../../releases)
+[![GitHub stars](https://img.shields.io/github/stars/slawek19926/Vitals?style=flat)](../../stargazers)
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?logo=apple)](https://www.apple.com/macos/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)](https://developer.apple.com/documentation/appkit)
@@ -15,6 +25,8 @@
 **English** · [Polski](README.md)
 
 </div>
+
+> **Why Vitals?** It goes deeper than Activity Monitor: P/E clusters, GPU and Neural Engine, the full SMC sensor tree, per-disk and per-interface monitoring, SMART, process energy, benchmarks and system-health diagnostics — without sending your data off the Mac.
 
 <img src="docs/screenshots/en/summary.png" alt="Summary: CPU, GPU, temperature and RAM meters, CPU overview with kernel time, top 15 processes and a memory graph">
 
