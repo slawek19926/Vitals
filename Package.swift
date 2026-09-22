@@ -44,6 +44,7 @@ let package = Package(
             swiftSettings: [.unsafeFlags(["-parse-as-library"])],
             linkerSettings: [
                 .linkedFramework("AppKit"),
+                .linkedFramework("CoreBluetooth"),
                 .linkedFramework("QuartzCore"),
                 .linkedFramework("ServiceManagement"),
                 .linkedFramework("VideoToolbox"),

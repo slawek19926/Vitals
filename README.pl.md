@@ -29,7 +29,7 @@ CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie
 
 </div>
 
-> **Dlaczego Vitals?** Dostajesz głębszy wgląd niż w Monitor aktywności: klastry P/E, GPU i Neural Engine, pełne drzewo SMC, per-dysk i per-interfejs monitoring, SMART, energię procesów, benchmarki i diagnostykę zdrowia systemu — bez wysyłania danych poza Maca.
+> **Dlaczego Vitals?** Dostajesz głębszy wgląd niż w Monitor aktywności: klastry P/E, GPU i Neural Engine, dostępne odczyty SMC, per-dysk i per-interfejs monitoring, SMART, energię procesów, benchmarki i diagnostykę zdrowia systemu — bez wysyłania danych poza Maca.
 
 <img src="docs/screenshots/summary.png" alt="Podsumowanie: mierniki CPU, GPU, temperatury i RAM, przegląd CPU z jądrem, TOP 15 procesów i wykres pamięci">
 
@@ -57,14 +57,14 @@ CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie
 | **Podsumowanie** | Mierniki CPU / GPU / temperatury / RAM, moc systemu z SMC, TOP 15 procesów i kafelki sieci, dysków oraz zasilania. Wykresy reagują na mysz: najechanie cofa listę procesów do wybranej chwili, przeciągnięcie uśrednia przedział. |
 | **Wydajność** | Osobna pozycja dla każdego urządzenia: rdzenie P/E, pamięć, GPU, Neural Engine, **każdy dysk fizyczny** (typ, architektura NVMe / USB / SATA / czytnik kart, SMART) i **każdy interfejs sieciowy** (Wi-Fi z SSID, Ethernet, hotspot, Bluetooth PAN, tunel VPN z nazwą profilu). |
 | **Procesy** | Drzewo po PPID z ikonami aplikacji, kolumny CPU / pamięć / wątki / dysk R-W / wpływ na energię / wybudzenia, kończenie i sygnały, priorytet (nice), próbkowanie procesu, zakończone podświetlone przez 8 s. |
-| **Zasilanie i czujniki** | Pełne drzewo SMC: temperatury, moce, napięcia, prądy, wentylatory — z wartością, minimum i maksimum, kolorowane według progów Apple silicon. |
+| **Zasilanie i czujniki** | Zmierzone temperatury i obroty wentylatorów SMC, potwierdzone odczyty szyn zasilania (moc, napięcie i prąd), dane baterii oraz moc podsystemów. Ustawienia, wartości docelowe i niezrozumiałe klucze SMC są pomijane; macOS nie udostępnia każdego fizycznego czujnika. |
 | **Apple Silicon** | Klastry P/E z wykresem per rdzeń, GPU (urządzenie / renderer / tiler), Neural Engine, silnik multimedialny z listą kodeków. |
 | **Miejsce na dysku** | Skanowanie przez `getattrlistbulk` (równolegle), treemap z drążeniem i **powiększaniem**, pierścień kategorii, największe foldery i pliki, usuwanie do Kosza. |
 | **Zdrowie systemu** | Kontrole miejsca, SMART, baterii, termiki, pamięci, obciążenia, procesów zombie i zabezpieczeń (SIP, FileVault, Gatekeeper, zapora) z dziennikiem zdarzeń. |
 | **Alerty** | Progi temperatury, CPU, swapu, wolnego miejsca, baterii i pojedynczego procesu — z powiadomieniami macOS. |
 | **Benchmarki** | Wybierane testy: CPU (jeden rdzeń / wszystkie), przepustowość pamięci, zapis i odczyt dysku, obliczenia GPU w Metalu. Historia wyników i eksport CSV. |
 | **Panele i pasek menu** | Pływające panele na pulpicie (CPU, pamięć, GPU, temperatura, sieć, dyski, zasilanie) z wykresem na żywo, przeciąganiem i regulowaną przezroczystością. W pasku menu osobna pozycja na metrykę — z wartością, mini wykresem albo obojgiem; lewy przycisk otwiera panel z wykresami i najcięższymi procesami. |
-| **Reszta** | Usługi launchd z akcjami, użytkownicy z procesami, połączenia TCP/UDP, Bluetooth, elementy startowe, zainstalowane aplikacje, sterowniki i rozszerzenia jądra, informacje o systemie i sprzęcie. |
+| **Reszta** | Usługi launchd z akcjami, użytkownicy z procesami, połączenia TCP/UDP pogrupowane według aplikacji i celu (cel można rozwinąć, by zobaczyć gniazda i porty lokalne; dostępny jest też widok gniazd i filtry zdalnych/nasłuchujących/lokalnych), Bluetooth z listą połączonych/sparowanych urządzeń i skanowaniem pobliskich BLE na żądanie, elementy startowe, zainstalowane aplikacje, sterowniki i rozszerzenia jądra, informacje o systemie i sprzęcie. |
 
 Dodatkowo: **polski i angielski przełączane w locie** (bez restartu), **uruchamianie po zalogowaniu** i praca w tle (zamknięcie okna zostawia aplikację w pasku menu, a próbkowanie zwalnia), motywy jasny / ciemny / monochromatyczny fosfor, konfigurowalne kolumny w każdej tabeli, eksport historii pomiarów do CSV.
 

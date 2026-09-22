@@ -211,7 +211,7 @@ final class ModulePopoverController: NSViewController {
             let smcPower = s.powerKeys.map { (PowerFreqViewController.describe($0.name), String(format: "%.2f W", $0.value)) }
             let volts = s.voltageKeys.map { (PowerFreqViewController.describe($0.name), String(format: "%.3f V", $0.value)) }
             let amps = s.currentKeys.map { (PowerFreqViewController.describe($0.name), String(format: "%.3f A", $0.value)) }
-            return [(L("Moc"), rows), (L("Klucze mocy (P*)"), smcPower), (L("Napięcie"), volts), (L("Prąd"), amps)]
+            return [(L("Moc"), rows), (L("Pomiary mocy SMC"), smcPower), (L("Napięcie"), volts), (L("Prąd"), amps)]
         }
     }
 

@@ -29,7 +29,7 @@ CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and s
 
 </div>
 
-> **Why Vitals?** It goes deeper than Activity Monitor: P/E clusters, GPU and Neural Engine, the full SMC sensor tree, per-disk and per-interface monitoring, SMART, process energy, benchmarks and system-health diagnostics — without sending your data off the Mac.
+> **Why Vitals?** It goes deeper than Activity Monitor: P/E clusters, GPU and Neural Engine, available SMC readings, per-disk and per-interface monitoring, SMART, process energy, benchmarks and system-health diagnostics — without sending your data off the Mac.
 
 <img src="docs/screenshots/en/summary.png" alt="Summary: CPU, GPU, temperature and RAM meters, CPU overview with kernel time, top 15 processes and a memory graph">
 
@@ -57,14 +57,14 @@ CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and s
 | **Summary** | CPU / GPU / temperature / RAM meters, system power from SMC, top 15 processes and tiles for network, disks and power. The graphs respond to the mouse: hovering rewinds the process list to that moment, dragging averages a range. |
 | **Performance** | A separate entry for every device: P/E cores, memory, GPU, Neural Engine, **each physical disk** (type, architecture — NVMe / USB / SATA / card reader — and SMART) and **each network interface** (Wi-Fi with SSID, Ethernet, hotspot, Bluetooth PAN, VPN tunnel with the profile name). |
 | **Processes** | A PPID tree with app icons, columns for CPU / memory / threads / disk R-W / energy impact / wakeups, quitting and signals, priority (nice), process sampling, exited processes highlighted for 8 s. |
-| **Power & sensors** | The full SMC tree: temperatures, power, voltages, currents, fans — each with current value, minimum and maximum, colored against Apple silicon thresholds. |
+| **Power & sensors** | Measured SMC temperatures and fan speeds, confirmed power-rail readings (power, voltage and current), battery values and subsystem power. Configuration, setpoints and opaque SMC keys are excluded; macOS does not expose every hardware sensor. |
 | **Apple Silicon** | P/E clusters with a graph per core, GPU (device / renderer / tiler), Neural Engine, media engine with the codec list. |
 | **Disk space** | Fast scanning through `getattrlistbulk` (in parallel), a treemap with drill-down and **zoom**, a file category ring, largest folders and files, moving items to the Trash. |
 | **System health** | Checks for free space, SMART, battery, thermals, memory, load, zombie processes and security (SIP, FileVault, Gatekeeper, firewall) with an event log. |
 | **Alerts** | Thresholds for temperature, CPU, swap, free space, battery and a single process — with macOS notifications. |
 | **Benchmarks** | Selectable tests: CPU (single core / all cores), memory bandwidth, sequential disk write and read, GPU compute in Metal. Result history and CSV export. |
 | **Panels and menu bar** | Floating desktop panels (CPU, memory, GPU, temperature, network, disks, power) with a live graph, dragging and adjustable opacity. In the menu bar each metric gets its own item — value, mini graph or both; left-click opens a panel with graphs and the busiest processes. |
-| **And the rest** | launchd services with actions, users with their processes, TCP/UDP connections, Bluetooth, startup items, installed apps, drivers and kernel extensions, system and hardware information. |
+| **And the rest** | launchd services with actions, users with their processes, TCP/UDP connections grouped by app and destination (expand a destination to inspect its sockets and local ports; socket view and remote/listening/local filters), Bluetooth with connected/paired devices and on-demand nearby BLE scanning, startup items, installed apps, drivers and kernel extensions, system and hardware information. |
 
 On top of that: **Polish and English switched on the fly** (no restart), **launch at login** and background operation (closing the window leaves the app in the menu bar and slows sampling down), light / dark / monochrome phosphor themes, configurable columns in every table, measurement history exported to CSV.
 

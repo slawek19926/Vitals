@@ -5,6 +5,45 @@ import SysCore
 @testable import Vitals
 
 final class RuntimeTests: XCTestCase {
+    func testSMCNumericDecoderPreservesSignedAndFixedPointReadings() {
+        func decoded(_ type: String, _ bytes: [UInt8]) -> Double? {
+            var result = 0.0
+            let ok = bytes.withUnsafeBufferPointer { buffer in
+                sc_smc_decode_numeric(type, Int32(bytes.count), buffer.baseAddress, &result)
+            }
+            return ok ? result : nil
+        }
+        XCTAssertEqual(decoded("sp78", [0xff, 0x00]), -1)
+        XCTAssertEqual(decoded("fpe2", [0x00, 0x14]), 5)
+        XCTAssertEqual(decoded("fp2e", [0x40, 0x00]), 1)
+        XCTAssertEqual(decoded("si16", [0xff, 0xfe]), -2)
+        XCTAssertEqual(decoded("ui32", [0x00, 0x01, 0x00, 0x00]), 65_536)
+        XCTAssertNil(decoded("spg8", [0x00, 0x10]))
+        XCTAssertNil(decoded("ch8*", [0x41, 0x42]))
+    }
+
+    func testElectricalReadingsRequireAConsistentPowerRail() {
+        let result = SMCMeasurements.electrical(
+            power: [Sensor(name: "PSTR", value: 9), Sensor(name: "PDTR", value: 10),
+                    Sensor(name: "PMVC", value: 3), Sensor(name: "PABC", value: 20),
+                    Sensor(name: "PHPB", value: 200)],
+            voltage: [Sensor(name: "VMVC", value: 3), Sensor(name: "VABC", value: 2),
+                      Sensor(name: "VBUS", value: 16_777_216)],
+            current: [Sensor(name: "IMVC", value: 1), Sensor(name: "IABC", value: 1)]
+        )
+        XCTAssertEqual(result.power.map(\.name), ["PSTR", "PDTR", "PMVC"])
+        XCTAssertEqual(result.voltage.map(\.name), ["VMVC"])
+        XCTAssertEqual(result.current.map(\.name), ["IMVC"])
+        XCTAssertEqual(result.rails, ["MVC"])
+        let retained = SMCMeasurements.electrical(
+            power: [Sensor(name: "PMVC", value: 6)],
+            voltage: [Sensor(name: "VMVC", value: 3)],
+            current: [Sensor(name: "IMVC", value: 1)],
+            previouslyVerified: result.rails
+        )
+        XCTAssertEqual(retained.power.map(\.name), ["PMVC"])
+    }
+
     func testCommandFailurePreservesExitStatusAndStderr() {
         let result = CommandRunner.run("/bin/sh", ["-c", "printf output; printf denied >&2; exit 7"])
         XCTAssertFalse(result.succeeded)

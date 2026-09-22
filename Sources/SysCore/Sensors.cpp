@@ -35,6 +35,45 @@ constexpr uint8_t SMC_CMD_READ_BYTES = 5, SMC_CMD_READ_INDEX = 8, SMC_CMD_READ_K
 uint32_t fourcc(const char* s) { return (uint32_t(s[0]) << 24) | (uint32_t(s[1]) << 16) | (uint32_t(s[2]) << 8) | uint32_t(s[3]); }
 std::string fourccStr(uint32_t v) { char b[5] = { char(v >> 24), char(v >> 16), char(v >> 8), char(v), 0 }; return b; }
 
+bool decodeSMCNumeric(const std::string& type, int size, const uint8_t* b, double& value) {
+    if (!b || size <= 0 || size > 32) return false;
+    if (type == "flt " && size == 4) {
+        float f; memcpy(&f, b, 4); value = f; return std::isfinite(value);
+    }
+    if (type == "ui8 " && size == 1) { value = b[0]; return true; }
+    if (type == "si8 " && size == 1) { value = int8_t(b[0]); return true; }
+    if (type == "ui16" && size == 2) { value = (b[0] << 8) | b[1]; return true; }
+    if (type == "si16" && size == 2) { value = int16_t((b[0] << 8) | b[1]); return true; }
+    if (type == "ui32" && size == 4) {
+        value = (uint32_t(b[0]) << 24) | (uint32_t(b[1]) << 16) | (uint32_t(b[2]) << 8) | b[3]; return true;
+    }
+    if (type == "si32" && size == 4) {
+        value = int32_t((uint32_t(b[0]) << 24) | (uint32_t(b[1]) << 16) | (uint32_t(b[2]) << 8) | b[3]); return true;
+    }
+    if (size == 2 && type.size() == 4 &&
+        (type.compare(0, 2, "sp") == 0 || type.compare(0, 2, "fp") == 0)) {
+        auto hex = [](char c) -> int {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            return -1;
+        };
+        if (hex(type[2]) < 0) return false;
+        int fractionalBits = hex(type[3]);
+        if (fractionalBits < 0) return false;
+        uint16_t raw = uint16_t((b[0] << 8) | b[1]);
+        value = (type[0] == 's' ? double(int16_t(raw)) : double(raw)) / double(1u << fractionalBits);
+        return true;
+    }
+    if (type == "ioft" && size == 8) {
+        uint64_t raw = 0;
+        for (int i = 0; i < 8; ++i) raw = (raw << 8) | b[i];
+        value = double(raw) / 65536.0;
+        return std::isfinite(value);
+    }
+    return false;
+}
+
 class SMC {
 public:
     static SMC& get() { static SMC s; return s; }
@@ -60,7 +99,7 @@ public:
         return true;
     }
 
-    // Odczyt klucza jako double (obsługa typów flt, sp78, ui8/16/32, ioft)
+    // Odczyt klucza jako double dla obsługiwanych liczbowych typów SMC.
     bool read(uint32_t key, double& value, SMCKeyInfo* infoOut = nullptr) {
         SMCKeyInfo info{};
         if (!keyInfo(key, info) || info.dataSize == 0 || info.dataSize > 32) return false;
@@ -68,15 +107,7 @@ public:
         in.key = key; in.keyInfo.dataSize = info.dataSize; in.data8 = SMC_CMD_READ_BYTES;
         if (!call(in, out) || out.result != 0) return false;
         if (infoOut) *infoOut = info;
-        const std::string type = fourccStr(info.dataType);
-        const uint8_t* b = out.bytes;
-        if (type == "flt " && info.dataSize == 4) { float f; memcpy(&f, b, 4); value = f; return std::isfinite(value); }
-        if (type == "sp78" && info.dataSize == 2) { value = int16_t((b[0] << 8) | b[1]) / 256.0; return true; }
-        if (type == "ui8 ") { value = b[0]; return true; }
-        if (type == "ui16") { value = (b[0] << 8) | b[1]; return true; }
-        if (type == "ui32") { value = (uint32_t(b[0]) << 24) | (b[1] << 16) | (b[2] << 8) | b[3]; return true; }
-        if (type == "ioft" && info.dataSize == 8) { uint64_t v = 0; for (int i = 0; i < 8; ++i) v = (v << 8) | b[i]; value = double(v) / 65536.0; return true; }
-        return false;
+        return decodeSMCNumeric(fourccStr(info.dataType), int(info.dataSize), out.bytes, value);
     }
 
     // Lista wszystkich kluczy (raz)
@@ -115,6 +146,16 @@ std::once_flag g_tempOnce;
 
 extern "C" {
 
+bool sc_smc_decode_numeric(const char* type, int size, const uint8_t* bytes, double* out) {
+    if (!type || !out) return false;
+    return decodeSMCNumeric(type, size, bytes, *out);
+}
+
+int sc_smc_key_capacity(void) {
+    SMC& smc = SMC::get();
+    return smc.ok() ? int(smc.keys().size()) : 0;
+}
+
 double sc_smc_read_float(const char* key) {
     double v = NAN;
     if (strlen(key) != 4) return NAN;
@@ -127,7 +168,7 @@ int sc_smc_read_temps(SCSensor* out, int max) {
     std::call_once(g_tempOnce, [&] {
         for (uint32_t k : smc.keys()) {
             std::string name = fourccStr(k);
-            if (name[0] != 'T') continue;
+            if (name[0] != 'T' || name.substr(2) == "SP") continue; // setpoint, nie temperatura zmierzona
             SMCKeyInfo info{};
             double v = 0;
             if (!smc.read(k, v, &info)) continue;
@@ -373,7 +414,7 @@ extern "C" bool sc_ane_info(int* cores, char* arch, int archLen) {
     return found;
 }
 
-// Wszystkie klucze SMC o danym prefiksie (T = temperatury, P = moce, V = napięcia, I = prądy, F = wentylatory)
+// Kandydaci na pomiary SMC; dopiero aplikacja sprawdza zgodność szyn P/V/I.
 extern "C" int sc_smc_read_keys(char prefix, SCSensor* out, int max) {
     SMC& smc = SMC::get();
     if (!smc.ok()) return 0;
@@ -385,7 +426,14 @@ extern "C" int sc_smc_read_keys(char prefix, SCSensor* out, int max) {
         SMCKeyInfo info{}; double v = 0;
         if (!smc.read(k, v, &info)) continue;
         std::string type = fourccStr(info.dataType);
-        if (type != "flt " && type != "sp78" && type != "ui8 " && type != "ui16") continue;
+        if (prefix == 'F') {
+            // F0Ac/F1Ac... to rzeczywiste obroty; F0Mn/F0Mx/F0Tg to limity i nastawy.
+            if (name.size() != 4 || name[2] != 'A' || name[3] != 'c' ||
+                !((name[1] >= '0' && name[1] <= '9') || (name[1] >= 'A' && name[1] <= 'F')) ||
+                (type != "fpe2" && type != "flt " && type != "ui16") || v < 0 || v > 15000) continue;
+        } else if (type != "flt " && type != "sp78") {
+            continue; // statusy ui8/ui16 nie mają gwarantowanej jednostki W/V/A
+        }
         if (!std::isfinite(v)) continue;
         strncpy(out[n].name, name.c_str(), sizeof(out[n].name) - 1);
         out[n].name[sizeof(out[n].name) - 1] = 0;

@@ -65,7 +65,7 @@ final class SensorNode {
         }
         for c in children { c.update(s) }
         // węzeł grupujący liście o wspólnej jednostce: wartość = maks. dzieci (jak TMOG), min/max z dzieci
-        if source == nil, !children.isEmpty {
+        if source == nil, !children.isEmpty, !isHeterogeneousGroup {
             if children.allSatisfy({ $0.children.isEmpty && $0.source != nil }) {
                 let vals = children.compactMap { $0.value }
                 if let mx = vals.max() {
@@ -88,6 +88,7 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
     /// Lista dysków, dla których zbudowano drzewo – zmiana oznacza podpięcie lub odłączenie nośnika
     private var builtDiskKeys: [String] = []
     private var built = false
+    private var builtSensorKeys: [String] = []
     private let summary = Label.make("", size: 11.5, dim: true)
 
     override func loadView() {
@@ -121,21 +122,33 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         scroll.documentView = outline; scroll.drawsBackground = false; scroll.hasVerticalScroller = true; scroll.scrollerStyle = .overlay; scroll.autohidesScrollers = true
         scroll.setContentHuggingPriority(.init(1), for: .vertical)
         let root = vstack([title, summary, scroll], spacing: 6)
+        summary.lineBreakMode = .byWordWrapping
+        summary.maximumNumberOfLines = 0
         for v in [title, summary, scroll] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 10, right: 18))
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in self?.outline.reloadData() }
+        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+            self?.outline.reloadData()
+            self?.update(Monitor.shared.latest)
+        }
     }
 
     func pageDidAppear() { update(Monitor.shared.latest) }
 
+    private static func sensorKeys(_ s: Snapshot) -> [String] {
+        s.temps.map { "T:" + $0.name } + s.powerKeys.map { "P:" + $0.name } +
+        s.voltageKeys.map { "V:" + $0.name } + s.currentKeys.map { "I:" + $0.name } +
+        s.fanKeys.map { "F:" + $0.name }
+    }
+
     private func build(_ s: Snapshot) {
         let hw = Monitor.shared.hardware
-        func tempGroup(_ title: String, prefixes: [String], accent: Subsystem) -> SensorNode {
+        func tempGroup(_ title: String, prefixes: [String], accent: Subsystem, excluding: [String] = []) -> SensorNode {
             let g = SensorNode(title, icon: "thermometer.medium", accent: accent)
             g.tempKey = prefixes.first
             g.range = .temperature(prefixes.first ?? "T")
-            for t in s.temps.sorted(by: { $0.name < $1.name }) where prefixes.contains(where: { t.name.hasPrefix($0) }) {
+            for t in s.temps.sorted(by: { $0.name < $1.name })
+                where prefixes.contains(where: { t.name.hasPrefix($0) }) && !excluding.contains(where: { t.name.hasPrefix($0) }) {
                 let name = t.name
                 let node = SensorNode(Self.describe(name), accent: accent, source: { $0.temps.first { $0.name == name }?.value })
                 node.tempKey = name
@@ -159,8 +172,8 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         let watt: (Double) -> String = { Fmt.watts($0, precision: 2) }
 
         let cpu = SensorNode(hw.cpuBrand + " (CPU)", icon: "cpu", accent: .cpu)
-        cpu.children.append(tempGroup("Temperatury rdzeni wydajnościowych", prefixes: ["Tp"], accent: .thermal))
-        cpu.children.append(tempGroup("Temperatury rdzeni energooszczędnych", prefixes: ["Te"], accent: .thermal))
+        cpu.children.append(tempGroup("Temperatury CPU (Tp*)", prefixes: ["Tp"], accent: .thermal))
+        cpu.children.append(tempGroup("Temperatury CPU (Te*)", prefixes: ["Te"], accent: .thermal))
         let util = SensorNode("Wykorzystanie", icon: "gauge.with.dots.needle.33percent", accent: .cpu)
         util.children = [
             SensorNode("Łącznie", accent: .cpu, format: pct, source: { $0.cpu.total }),
@@ -220,9 +233,9 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         let pkgPower = SensorNode("Moc pakietu SoC", accent: .energy, format: watt, source: { ($0.freq?.combinedWatts ?? 0) > 0 ? $0.freq?.combinedWatts : nil }); pkgPower.range = .fixed(0, 30)
         let dramPower = SensorNode("DRAM", accent: .energy, format: watt, source: { $0.power.available ? $0.power.dramWatts : nil }); dramPower.range = .fixed(0, 8)
         power.children.append(contentsOf: [pkgPower, dramPower])
-        power.children.append(keyGroup("Wszystkie klucze mocy SMC (P*)", icon: "bolt", keys: s.powerKeys, path: \.powerKeys, unit: "W", accent: .energy))
-        power.children.append(keyGroup(L("Napięcia SMC (V*)"), icon: "waveform", keys: s.voltageKeys, path: \.voltageKeys, unit: "V", accent: .energy))
-        power.children.append(keyGroup(L("Prądy SMC (I*)"), icon: "waveform.path", keys: s.currentKeys, path: \.currentKeys, unit: "A", accent: .energy))
+        power.children.append(keyGroup("Pomiary mocy SMC", icon: "bolt", keys: s.powerKeys, path: \.powerKeys, unit: "W", accent: .energy))
+        power.children.append(keyGroup("Napięcia szyn zasilania SMC", icon: "waveform", keys: s.voltageKeys, path: \.voltageKeys, unit: "V", accent: .energy))
+        power.children.append(keyGroup("Prądy szyn zasilania SMC", icon: "waveform.path", keys: s.currentKeys, path: \.currentKeys, unit: "A", accent: .energy))
 
         let bat = SensorNode("Bateria", icon: "battery.100percent", accent: .energy)
         let batLevel = SensorNode("Poziom", accent: .energy, format: { String(format: "%.0f%%", $0) }, source: { $0.battery.map { Double($0.percent) } })
@@ -282,12 +295,14 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
             ssd.children.append(node)
         }
 
-        let other = tempGroup("Pozostałe czujniki temperatury", prefixes: ["TC", "TV", "TP", "TR", "TW", "TA", "TI", "TS", "TD", "T5", "TM"], accent: .thermal)
+        let other = tempGroup("Pozostałe odczyty temperatury", prefixes: ["T"], accent: .thermal,
+                              excluding: ["Tp", "Te", "Tg", "TB", "Tm", "TM", "TH"])
         let fans = keyGroup(L("Wentylatory (F*)"), icon: "fan", keys: s.fanKeys, path: \.fanKeys, unit: "obr/min", accent: .cpu)
 
         let machine = SensorNode("\(hw.marketingName) (\(hw.model))", icon: "laptopcomputer", accent: nil)
         machine.children = [cpu, gpu, ane, mem, ssd, bat, power, other] + (fans.children.isEmpty ? [] : [fans])
         root = [machine]
+        builtSensorKeys = Self.sensorKeys(s)
         built = true
         outline.reloadData()
         outline.expandItem(machine)
@@ -301,8 +316,8 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
             "TH0T": "SSD", "TH0x": "SSD (maks.)", "TW0P": "Moduł bezprzewodowy", "TCMz": "SoC (maks.)", "TCMb": "SoC (baza)", "TCHP": "Hub", "TIOP": "I/O", "TAOL": "Otoczenie",
         ]
         if let d = map[key] { return "\(L(d)) (\(key))" }
-        if key.hasPrefix("Tp") { return L("Rdzeń P") + " \(key.dropFirst(2)) (\(key))" }
-        if key.hasPrefix("Te") { return L("Rdzeń E") + " \(key.dropFirst(2)) (\(key))" }
+        if key.hasPrefix("Tp") { return "CPU Tp \(key.dropFirst(2)) (\(key))" }
+        if key.hasPrefix("Te") { return "CPU Te \(key.dropFirst(2)) (\(key))" }
         if key.hasPrefix("Tg") { return "GPU \(key.dropFirst(2)) (\(key))" }
         if key.hasPrefix("TPD") { return "PMU \(key.dropFirst(3)) (\(key))" }
         if key.hasPrefix("TRD") { return L("Regulator") + " \(key.dropFirst(3)) (\(key))" }
@@ -332,9 +347,10 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
     }
 
     private func update(_ s: Snapshot) {
-        if !built, !s.temps.isEmpty { build(s) }
-        // podpięcie lub odłączenie dysku wymaga przebudowy drzewa
-        if built, s.disks.map(\.bsd) != builtDiskKeys { built = false; build(s) }
+        let keys = Self.sensorKeys(s)
+        if !built { build(s) }
+        // Zmiana czujników lub dysków wymaga przebudowy drzewa.
+        if built, keys != builtSensorKeys || s.disks.map(\.bsd) != builtDiskKeys { build(s) }
         guard built else { return }
         for r in root { r.update(s) }
         let filter = search.stringValue.lowercased()
@@ -361,9 +377,16 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
             for c in n.children { refresh(c) }
         }
         for r in root { refresh(r) }
-        let tempCount = s.temps.count, pk = s.powerKeys.count, vk = s.voltageKeys.count, ik = s.currentKeys.count
         let src = s.powerStale ? L("Dane nieaktualne") : (s.powerSource.isEmpty ? L("Brak danych") : s.powerSource)
-        summary.stringValue = "\(tempCount) " + L("czujników temperatury") + " · \(pk) " + L("mocy") + " · \(vk) " + L("napięć") + " · \(ik) " + L("prądów") + " (AppleSMC) · " + L("moc i taktowania") + ": \(src)"
+        var counts = [
+            "\(s.temps.count) " + L("odczytów temperatury"),
+            "\(s.voltageKeys.count) " + L("napięć"),
+            "\(s.powerKeys.count) " + L("mocy"),
+            "\(s.currentKeys.count) " + L("prądów"),
+        ]
+        if !s.fanKeys.isEmpty { counts.append("\(s.fanKeys.count) " + L("wentylatorów")) }
+        counts.append(L("moc i taktowania") + ": " + src)
+        summary.stringValue = counts.joined(separator: " · ")
     }
 
     @objc private func filterChanged() {
@@ -371,7 +394,10 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         if !f.isEmpty { expandAll() }
         update(Monitor.shared.latest)
     }
-    @objc private func expandAll() { for r in root { outline.expandItem(r, expandChildren: true) } }
+    @objc private func expandAll() {
+        for r in root { outline.expandItem(r, expandChildren: true) }
+        update(Monitor.shared.latest)
+    }
     @objc private func collapseAll() { for r in root { for c in r.children { outline.collapseItem(c, collapseChildren: true) } } }
     @objc private func resetMinMax() {
         func reset(_ n: SensorNode) { n.minV = nil; n.maxV = nil; for c in n.children { reset(c) } }

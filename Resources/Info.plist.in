@@ -17,6 +17,7 @@
 	<key>NSPrincipalClass</key><string>NSApplication</string>
 	<key>NSHumanReadableCopyright</key><string>© 2026 Sławomir Sendra · GNU GPL v3</string>
 	<key>NSLocationWhenInUseUsageDescription</key><string>macOS wymaga zgody na dostęp do lokalizacji, aby aplikacja mogła pokazać nazwę sieci Wi-Fi (SSID). Położenie nie jest nigdzie wysyłane ani zapisywane.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key><string>Vitals skanuje pobliskie urządzenia Bluetooth Low Energy tylko po wybraniu opcji „Skanuj w pobliżu”, aby pokazać ich nazwy i siłę sygnału. Wyniki pozostają na tym Macu.</string>
 	<key>SMPrivilegedExecutables</key>
 	<dict>
 		<key>online.equishow.vitals.helper</key>

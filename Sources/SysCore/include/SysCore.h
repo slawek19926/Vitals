@@ -140,6 +140,8 @@ typedef struct {
 int    sc_smc_read_temps(SCSensor* out, int max);
 double sc_smc_read_float(const char* key);   // NaN gdy brak klucza
 int    sc_smc_read_keys(char prefix, SCSensor* out, int max);   // wszystkie klucze o prefiksie
+int    sc_smc_key_capacity(void);  // liczba kluczy SMC do alokacji pełnej migawki
+bool   sc_smc_decode_numeric(const char* type, int size, const uint8_t* bytes, double* out);
 // Moc podsystemów (W) z IOReport od poprzedniego wywołania; sysWatts z SMC (PSTR)
 SCPower sc_power_sample(void);
 // Apple Neural Engine: liczba rdzeni i architektura (np. 16, "h16g")

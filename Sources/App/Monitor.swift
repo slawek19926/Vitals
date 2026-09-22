@@ -153,6 +153,30 @@ struct Hardware {
 
 struct Sensor { let name: String; let value: Double }
 
+/// A matching P/V/I suffix identifies an electrical rail. Verify that its
+/// reported power agrees with voltage × current before assigning units.
+enum SMCMeasurements {
+    static func electrical(power: [Sensor], voltage: [Sensor], current: [Sensor], previouslyVerified: Set<String> = [])
+        -> (power: [Sensor], voltage: [Sensor], current: [Sensor], rails: Set<String>) {
+        let volts = Dictionary(voltage.map { ($0.name, $0.value) }, uniquingKeysWith: { first, _ in first })
+        let amps = Dictionary(current.map { ($0.name, $0.value) }, uniquingKeysWith: { first, _ in first })
+        var rails = Set<String>()
+        for reading in power where reading.name.count == 4 && reading.name.first == "P" {
+            let suffix = String(reading.name.dropFirst())
+            guard let v = volts["V" + suffix], let i = amps["I" + suffix],
+                  (0...500).contains(reading.value), (0...60).contains(v), (0...50).contains(i), v > 0,
+                  previouslyVerified.contains(suffix) || abs(reading.value - v * i) <= max(0.25, v * i * 0.6) else { continue }
+            rails.insert(suffix)
+        }
+        return (
+            power.filter { ["PSTR", "PDTR"].contains($0.name) || rails.contains(String($0.name.dropFirst())) },
+            voltage.filter { rails.contains(String($0.name.dropFirst())) },
+            current.filter { rails.contains(String($0.name.dropFirst())) },
+            rails
+        )
+    }
+}
+
 /// Lekki wpis historii: tyle danych, ile potrzeba do listy TOP procesów sprzed chwili
 struct HistoryProc {
     let pid: Int
@@ -430,6 +454,7 @@ final class Monitor {
     private var lastThreads = 0
     private var lastTemps: [Sensor] = []
     private var lastPower: [Sensor] = [], lastVolt: [Sensor] = [], lastCurr: [Sensor] = [], lastFan: [Sensor] = []
+    private var verifiedSMCRails = Set<String>() // dostęp wyłącznie z seryjnej auxQueue
     private var tick = 0
     // każdy rodzaj danych ma własną częstotliwość – tanie metryki idą z pełną prędkością
     private var lastProcAt = Date.distantPast
@@ -499,7 +524,7 @@ final class Monitor {
         let sensorsHot = sensorsInUse > 0 || Prefs.shared.menuBarModules.contains("temperature") || Prefs.shared.widgets.contains("temperature")
         let needPower = now.timeIntervalSince(lastPowerAt) >= 0.9 || lastSMCPower.sysWatts == 0
         let needTemps = now.timeIntervalSince(lastTempAt) >= (sensorsHot ? 2.4 : 8.0) || lastTemps.isEmpty
-        let needKeys = now.timeIntervalSince(lastKeysAt) >= (sensorsHot ? 2.8 : 12.0) || lastPower.isEmpty
+        let needKeys = now.timeIntervalSince(lastKeysAt) >= (sensorsHot ? 2.8 : 12.0)
         guard needPower || needTemps || needKeys else { return }
         auxBusy = true
         if needPower { lastPowerAt = now }
@@ -520,12 +545,16 @@ final class Monitor {
                 if helper { helperPower = HelperClient.shared.fetchPower() }
             }
             if needTemps {
-                var sensors = [SCSensor](repeating: SCSensor(), count: 200)
-                let nt = Int(sc_smc_read_temps(&sensors, 200))
+                let capacity = max(1, Int(sc_smc_key_capacity()))
+                var sensors = [SCSensor](repeating: SCSensor(), count: capacity)
+                let nt = Int(sc_smc_read_temps(&sensors, Int32(capacity)))
                 temps = (0..<nt).map { Sensor(name: cString(sensors[$0].name), value: sensors[$0].value) }
             }
             if needKeys {
-                keys = (self.readKeys("P"), self.readKeys("V"), self.readKeys("I"), self.readKeys("F"))
+                let electrical = SMCMeasurements.electrical(power: self.readKeys("P"), voltage: self.readKeys("V"), current: self.readKeys("I"),
+                                                            previouslyVerified: self.verifiedSMCRails)
+                self.verifiedSMCRails.formUnion(electrical.rails)
+                keys = (electrical.power, electrical.voltage, electrical.current, self.readKeys("F"))
             }
             self.queue.async {
                 if let power {
@@ -542,8 +571,9 @@ final class Monitor {
     }
 
     private func readKeys(_ prefix: Character) -> [Sensor] {
-        var arr = [SCSensor](repeating: SCSensor(), count: 200)
-        let n = Int(sc_smc_read_keys(CChar(prefix.asciiValue!), &arr, 200))
+        let capacity = max(1, Int(sc_smc_key_capacity()))
+        var arr = [SCSensor](repeating: SCSensor(), count: capacity)
+        let n = Int(sc_smc_read_keys(CChar(prefix.asciiValue!), &arr, Int32(capacity)))
         return (0..<n).map { Sensor(name: cString(arr[$0].name), value: arr[$0].value) }
     }
 
