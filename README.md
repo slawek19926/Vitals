@@ -10,6 +10,9 @@ CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and s
 
 [![Download latest release](https://img.shields.io/badge/Download-latest%20release-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
 [![Star Vitals](https://img.shields.io/badge/★-Star%20Vitals-181717?style=for-the-badge&logo=github)](../../stargazers)
+[![Support Vitals](https://img.shields.io/badge/❤-Support%20Vitals%20on%20Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
+
+> **Support Vitals:** donations go toward the Apple Developer Program membership needed for signed and notarized releases, a smoother privileged-helper installation, and future Homebrew distribution.
 
 [![Latest release](https://img.shields.io/github/v/release/slawek19926/Vitals?display_name=tag&sort=semver)](../../releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total)](../../releases)
