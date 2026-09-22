@@ -10,6 +10,9 @@ CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie
 
 [![Pobierz najnowsze wydanie](https://img.shields.io/badge/Pobierz-najnowsze%20wydanie-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
 [![Dodaj gwiazdkę](https://img.shields.io/badge/★-Dodaj%20gwiazdkę-181717?style=for-the-badge&logo=github)](../../stargazers)
+[![Wesprzyj Vitals](https://img.shields.io/badge/❤-Wesprzyj%20Vitals%20na%20Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/slawek19926)
+
+> **Wesprzyj Vitals:** wpłaty idą na Apple Developer Program potrzebny do podpisanych i notaryzowanych wydań, łatwiejszej instalacji pomocnika oraz przyszłej dystrybucji przez Homebrew.
 
 [![Latest release](https://img.shields.io/github/v/release/slawek19926/Vitals?display_name=tag&sort=semver)](../../releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/slawek19926/Vitals/total?label=pobrania)](../../releases)
