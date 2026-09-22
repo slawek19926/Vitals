@@ -14,6 +14,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private var displayPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var fontPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var tempPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let profilePopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var refreshPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var historyPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var pixelsPopup = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -43,6 +44,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let exitedSwitch = NSSwitch(), askAdminSwitch = NSSwitch(), rememberSwitch = NSSwitch(), alwaysAdminSwitch = NSSwitch()
     private let helperStatus = Label.make("", size: 11, dim: true)
     private var helperButton: NSButton?
+    private var helperObserver: NSObjectProtocol?
+
+    deinit {
+        if let helperObserver { NotificationCenter.default.removeObserver(helperObserver) }
+    }
 
     override func loadView() {
         view = NSView()
@@ -79,6 +85,13 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         row(appearance, "Styl interfejsu", stylePopup, hint: "Nowoczesny: karty z cieniem, jednolite paski, cienkie linie wykresów i akcent systemowy. Klasyczny: segmentowe paski LED, poświata i ramki w kolorach podsystemów. Część elementów przyjmuje nowy styl po ponownym uruchomieniu.")
 
         let charts = section("Wykresy i odświeżanie", icon: "waveform.path.ecg")
+        profilePopup.addItems(withTitles: ["Własny", "Oszczędny", "Standardowy", "Diagnostyczny"].map { L($0) })
+        let interval = Monitor.shared.interval
+        if interval == 2 && !prefs.smoothGraphs && !prefs.highFPS { profilePopup.selectItem(at: 1) }
+        else if interval == 0.5 && prefs.smoothGraphs && !prefs.highFPS { profilePopup.selectItem(at: 2) }
+        else if interval == 0.1 && prefs.smoothGraphs && prefs.highFPS { profilePopup.selectItem(at: 3) }
+        profilePopup.target = self; profilePopup.action = #selector(profileChanged)
+        row(charts, "Profil monitorowania", profilePopup, hint: "Oszczędny: co 2 s, bez animacji. Standardowy: co 0,5 s. Diagnostyczny: co 0,1 s.")
         refreshPopup.addItems(withTitles: ["Bardzo szybko — 10/s", "Szybko — 4/s", "Normalnie — 2/s", "Wolno — 1/s", "Oszczędnie — co 2 s"].map { L($0) })
         let ivs: [Double] = [0.1, 0.25, 0.5, 1, 2]
         refreshPopup.selectItem(at: ivs.firstIndex(where: { abs($0 - Monitor.shared.interval) < 0.01 }) ?? 1)
@@ -86,7 +99,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         pixelsPopup.selectItem(at: [8, 12, 16, 24].firstIndex(of: prefs.pixelsPerUpdate) ?? 2)
         pixelsPopup.target = self; pixelsPopup.action = #selector(pixelsChanged)
         refreshPopup.target = self; refreshPopup.action = #selector(refreshChanged)
-        row(charts, "Prędkość odświeżania", refreshPopup, hint: "Dotyczy tanich pomiarów (CPU, pamięć, dysk, sieć). Lista procesów odświeża się co ok. 2 s, a czujniki co ok. 1 s, niezależnie od tego ustawienia.")
+        row(charts, "Prędkość odświeżania", refreshPopup, hint: "Lista procesów: nie częściej niż co 0,5 s. Dyski fizyczne: co 2 s. Czujniki mają osobny harmonogram.")
         row(charts, "Krok wykresu na pomiar", pixelsPopup, hint: "Każdy pomiar przesuwa wykres o tyle pikseli. Większy krok daje czytelniejszy ruch, mniejszy mieści dłuższą historię.")
         smoothSwitch.state = prefs.smoothGraphs ? .on : .off
         smoothSwitch.target = self; smoothSwitch.action = #selector(smoothChanged)
@@ -184,12 +197,16 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
 
         let helper = section("Pomocnik uprzywilejowany (zalecane)", icon: "shield.checkered")
         helperStatus.stringValue = L("Stan: ") + HelperClient.shared.statusText
-        helperStatus.lineBreakMode = .byWordWrapping; helperStatus.maximumNumberOfLines = 2
+        helperStatus.lineBreakMode = .byWordWrapping; helperStatus.maximumNumberOfLines = 0
         let hb = NSButton(title: HelperClient.shared.isEnabled ? (HelperClient.shared.outdated ? L("Zaktualizuj pomocnika…") : L("Wyłącz pomocnika")) : L("Włącz pomocnika…"), target: self, action: #selector(toggleHelper(_:)))
         hb.bezelStyle = .rounded; hb.controlSize = .small; hb.font = Fonts.ui(11.5)
         helperButton = hb
+        refreshHelperStatus()
         row(helper, "Pełne dane procesów i liczniki energii bez hasła przy starcie", hb, hint: "Instaluje w systemie mały pomocnik (LaunchDaemon) z tego pakietu. macOS poprosi o jednorazowe zatwierdzenie w Ustawieniach systemowych → Ogólne → Elementy logowania i rozszerzenia. Pomocnik działa w tle jako administrator i przekazuje aplikacji przez XPC tylko listę procesów i odczyty mocy.")
         helper.add(helperStatus)
+        let updateHint = Label.make(L("Po aktualizacji aplikacji starszy pomocnik aktualizuje się automatycznie. macOS może ponownie poprosić o hasło lub zatwierdzenie. Po anulowaniu możesz ponowić próbę tutaj."), size: 11, dim: true)
+        updateHint.lineBreakMode = .byWordWrapping; updateHint.maximumNumberOfLines = 0
+        helper.add(updateHint)
         let openLI = NSButton(title: L("Otwórz Elementy logowania…"), target: self, action: #selector(openLoginItems))
         openLI.bezelStyle = .rounded; openLI.controlSize = .small; openLI.font = Fonts.ui(11.5)
         row(helper, "Ustawienia systemowe", openLI)
@@ -320,9 +337,12 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
             self?.themePopup.selectItem(at: ThemeManager.shared.appTheme.rawValue)
             self?.displayPopup.selectItem(at: ThemeManager.shared.display.rawValue)
         }
+        helperObserver = NotificationCenter.default.addObserver(forName: .helperStatusChanged, object: nil, queue: .main) { [weak self] _ in
+            self?.refreshHelperStatus()
+        }
     }
 
-    func pageDidAppear() {}
+    func pageDidAppear() { refreshHelperStatus(); HelperClient.shared.fetchVersion() }
 
     /// Pokazuje karty wybranej kategorii
     private func showCategory(_ index: Int) {
@@ -389,9 +409,23 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     @objc private func openColors() { (NSApp.delegate as? AppDelegate)?.showColorsPanel(nil) }
     @objc private func fontChanged() { prefs.systemTitleFont = fontPopup.indexOfSelectedItem == 1 }
     @objc private func tempChanged() { prefs.fahrenheit = tempPopup.indexOfSelectedItem == 1 }
-    @objc private func refreshChanged() { Monitor.shared.interval = [0.1, 0.25, 0.5, 1, 2][refreshPopup.indexOfSelectedItem] }
+    @objc private func profileChanged() {
+        switch profilePopup.indexOfSelectedItem {
+        case 1: Monitor.shared.interval = 2; prefs.smoothGraphs = false; prefs.highFPS = false
+        case 2: Monitor.shared.interval = 0.5; prefs.smoothGraphs = true; prefs.highFPS = false
+        case 3: Monitor.shared.interval = 0.1; prefs.smoothGraphs = true; prefs.highFPS = true
+        default: return
+        }
+        refreshPopup.selectItem(at: [0.1, 0.25, 0.5, 1, 2].firstIndex(of: Monitor.shared.interval) ?? 2)
+        smoothSwitch.state = prefs.smoothGraphs ? .on : .off
+        fpsSwitch.state = prefs.highFPS ? .on : .off
+    }
+    @objc private func refreshChanged() {
+        profilePopup.selectItem(at: 0)
+        Monitor.shared.interval = [0.1, 0.25, 0.5, 1, 2][refreshPopup.indexOfSelectedItem]
+    }
     @objc private func pixelsChanged() { prefs.pixelsPerUpdate = [8, 12, 16, 24][pixelsPopup.indexOfSelectedItem] }
-    @objc private func smoothChanged() { prefs.smoothGraphs = smoothSwitch.state == .on }
+    @objc private func smoothChanged() { profilePopup.selectItem(at: 0); prefs.smoothGraphs = smoothSwitch.state == .on }
     @objc private func updateCheckChanged() {
         prefs.autoUpdateCheck = updateSwitch.state == .on
         if updateSwitch.state == .on { prefs.skippedUpdate = "" }
@@ -526,7 +560,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         procField.stringValue = "\(prefs.alertProcessCPU)"
     }
 
-    @objc private func fpsChanged() { prefs.highFPS = fpsSwitch.state == .on }
+    @objc private func fpsChanged() { profilePopup.selectItem(at: 0); prefs.highFPS = fpsSwitch.state == .on }
     @objc private func spanChanged() { prefs.graphSpanSeconds = [10, 20, 30, 60, 120, 300][spanPopup.indexOfSelectedItem] }
     @objc private func crossfadeChanged() { prefs.crossfadeValues = crossfadeSwitch.state == .on }
     @objc private func historyChanged() { prefs.history = [60, 120, 240, 600][historyPopup.indexOfSelectedItem] }
@@ -537,13 +571,14 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     @objc private func askAdminChanged() { prefs.askAdmin = askAdminSwitch.state == .on }
     @objc private func alwaysAdminChanged() { prefs.alwaysAdmin = alwaysAdminSwitch.state == .on }
     @objc private func toggleHelper(_ sender: NSButton) {
+        let helper = HelperClient.shared
+        guard !helper.updating else { return }
         do {
-            // nieaktualny pomocnik instalujemy ponownie zamiast wyłączać
-            if HelperClient.shared.isEnabled && !HelperClient.shared.outdated { try HelperClient.shared.unregister() }
-            else { try HelperClient.shared.register() }
+            if helper.isEnabled && !helper.outdated && !helper.updateNeedsRetry { try helper.unregister() }
+            else { helper.updateHelper() }
         } catch {
             let a = NSAlert(); a.messageText = L("Nie udało się zarejestrować pomocnika")
-            a.informativeText = error.localizedDescription + "\n\nRejestracja LaunchDaemon przez SMAppService wymaga poprawnie podpisanej aplikacji (podpis Developer ID). Alternatywa: Uruchom ponownie jako administrator."
+            a.informativeText = error.localizedDescription
             a.runModal()
         }
         refreshHelperStatus()
@@ -563,10 +598,14 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
 
     @objc private func openFullDiskAccess() { NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!) }
     private func refreshHelperStatus() {
-        helperStatus.stringValue = L("Stan: ") + HelperClient.shared.statusText
-        helperButton?.title = HelperClient.shared.isEnabled
-            ? (HelperClient.shared.outdated ? L("Zaktualizuj pomocnika…") : L("Wyłącz pomocnika"))
-            : L("Włącz pomocnika…")
+        let helper = HelperClient.shared
+        helperStatus.stringValue = L("Stan: ") + helper.statusText
+        helperButton?.isEnabled = !helper.updating
+        if helper.updating { helperButton?.title = L("Aktualizowanie pomocnika…") }
+        else if helper.requiresApproval { helperButton?.title = L("Otwórz Elementy logowania…") }
+        else if helper.outdated || helper.updateNeedsRetry { helperButton?.title = L("Zaktualizuj pomocnika…") }
+        else { helperButton?.title = helper.isEnabled ? L("Wyłącz pomocnika") : L("Włącz pomocnika…") }
+        alwaysAdminSwitch.isEnabled = !helper.isEnabled && !helper.updating
     }
     @objc private func rememberChanged() { prefs.rememberPage = rememberSwitch.state == .on }
     @objc private func startPageChanged() { prefs.startPage = startPagePopup.indexOfSelectedItem }

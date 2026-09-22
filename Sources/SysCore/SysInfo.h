@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "include/syscore.h"
+#include "include/SysCore.h"
 
 namespace sysinfo {
 
@@ -34,6 +34,7 @@ struct ProcessInfo {
     uint64_t    diskRead = 0;   // łącznie odczytane bajty (rusage)
     uint64_t    diskWrite = 0;  // łącznie zapisane bajty
     time_t      startTime = 0;
+    int64_t     startTimeMicros = 0;
     bool        accessible = true; // false = brak uprawnień do szczegółów (procesy innych użytkowników)
 };
 
@@ -42,7 +43,7 @@ public:
     std::vector<ProcessInfo> sample();
     int totalThreads() const { return m_totalThreads; }
 private:
-    struct Prev { uint64_t cpuNs; time_t start; };
+    struct Prev { uint64_t cpuNs; int64_t start; };
     std::unordered_map<int, Prev>        m_prev;
     std::unordered_map<int, std::string> m_pathCache;
     std::unordered_map<int, std::string> m_userCache;

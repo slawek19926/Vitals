@@ -25,7 +25,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/storage/IOBlockStorageDriver.h>
-#include "include/syscore.h"
+#include "include/SysCore.h"
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
@@ -156,12 +156,13 @@ std::vector<ProcessInfo> ProcessSampler::sample() {
         p.ppid = kp.kp_eproc.e_ppid;
         p.uid = kp.kp_eproc.e_ucred.cr_uid;
         p.startTime = kp.kp_proc.p_starttime.tv_sec;
+        p.startTimeMicros = int64_t(p.startTime) * 1000000 + kp.kp_proc.p_starttime.tv_usec;
         p.name.assign(kp.kp_proc.p_comm, strnlen(kp.kp_proc.p_comm, MAXCOMLEN));
         const int status = kp.kp_proc.p_stat;
 
         // Ścieżka (cache - nie zmienia się w trakcie życia procesu)
         auto pc = m_pathCache.find(p.pid);
-        if (pc != m_pathCache.end()) {
+        if (pc != m_pathCache.end() && m_prev.count(p.pid) && m_prev[p.pid].start == p.startTimeMicros) {
             p.path = pc->second;
         } else if (p.pid > 0) {
             char pathBuf[PROC_PIDPATHINFO_MAXSIZE];
@@ -212,10 +213,10 @@ std::vector<ProcessInfo> ProcessSampler::sample() {
         m_totalThreads += p.threads;
 
         auto prev = m_prev.find(p.pid);
-        if (got && prev != m_prev.end() && prev->second.start == p.startTime && wallDelta > 0 && cpuNs >= prev->second.cpuNs) {
+        if (got && prev != m_prev.end() && prev->second.start == p.startTimeMicros && wallDelta > 0 && cpuNs >= prev->second.cpuNs) {
             p.cpuPercent = double(cpuNs - prev->second.cpuNs) * 100.0 / wallDelta;
         }
-        newPrev[p.pid] = { cpuNs, p.startTime };
+        newPrev[p.pid] = { cpuNs, p.startTimeMicros };
 
         switch (status) {
             case P_SZOMB:  p.state = "Zombie"; break;

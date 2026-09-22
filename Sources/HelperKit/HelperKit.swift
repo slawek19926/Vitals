@@ -11,6 +11,7 @@ public let helperVersion = AppVersion.full
     /// Moc podsystemów z IOReport (JSON HelperPower)
     func power(reply: @escaping (Data) -> Void)
     func version(reply: @escaping (String) -> Void)
+    func priority(pid: Int32, startTimeMicros: Int64, value: Int32, reply: @escaping (String) -> Void)
     /// Sterowanie usługą launchd; akcja z ustalonej listy, wynik jako tekst (pusty = OK)
     func service(action: String, domain: String, label: String, reply: @escaping (String) -> Void)
 }
@@ -52,14 +53,16 @@ public struct HelperProcess: Codable {
     public var threads: Int
     public var cpuTimeNs: UInt64
     public var startTime: Int64
+    public var startTimeMicros: Int64? = nil
     public var accessible: Bool
     /// Łączne bajty we/wy procesu (rusage); 0 gdy brak dostępu
     public var diskRead: UInt64 = 0
     public var diskWrite: UInt64 = 0
     public var contextSwitches: UInt64 = 0
-    public init(pid: Int, ppid: Int, uid: Int, name: String, user: String, state: String, path: String, cpuPercent: Double, memBytes: UInt64, threads: Int, cpuTimeNs: UInt64, startTime: Int64, accessible: Bool, diskRead: UInt64 = 0, diskWrite: UInt64 = 0, contextSwitches: UInt64 = 0) {
+    public init(pid: Int, ppid: Int, uid: Int, name: String, user: String, state: String, path: String, cpuPercent: Double, memBytes: UInt64, threads: Int, cpuTimeNs: UInt64, startTime: Int64, accessible: Bool, diskRead: UInt64 = 0, diskWrite: UInt64 = 0, contextSwitches: UInt64 = 0, startTimeMicros: Int64? = nil) {
         self.pid = pid; self.ppid = ppid; self.uid = uid; self.name = name; self.user = user; self.state = state; self.path = path
         self.cpuPercent = cpuPercent; self.memBytes = memBytes; self.threads = threads; self.cpuTimeNs = cpuTimeNs; self.startTime = startTime; self.accessible = accessible
+        self.startTimeMicros = startTimeMicros
         self.diskRead = diskRead; self.diskWrite = diskWrite; self.contextSwitches = contextSwitches
     }
 }
@@ -71,6 +74,8 @@ public struct HelperProcessList: Codable {
 }
 
 public struct HelperPower: Codable {
+    /// Timestamp of the actual source sample; optional for older helpers.
+    public var sampledAt: TimeInterval? = nil
     public var sysWatts, cpuWatts, gpuWatts, aneWatts, dramWatts: Double
     public var available: Bool
     /// Z powermetrics (root): taktowania klastrów i GPU w MHz, moc łączna pakietu

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <algorithm>
+#include <libproc.h>
 
 namespace {
 template <size_t N>
@@ -71,7 +72,7 @@ SCProcess* sc_sample_processes(SCSampler* s, int* count, int* totalThreads) {
         o.pid = p.pid; o.ppid = p.ppid; o.uid = p.uid;
         copyStr(o.name, p.name); copyStr(o.user, p.user); copyStr(o.state, p.state); copyStr(o.path, p.path);
         o.cpuPercent = p.cpuPercent; o.memBytes = p.memBytes; o.threads = p.threads;
-        o.cpuTimeNs = p.cpuTimeNs; o.startTime = p.startTime; o.accessible = p.accessible;
+        o.cpuTimeNs = p.cpuTimeNs; o.startTime = p.startTime; o.startTimeMicros = p.startTimeMicros; o.accessible = p.accessible;
         o.diskRead = p.diskRead; o.diskWrite = p.diskWrite;
         o.contextSwitches = p.contextSwitches;
     }
@@ -145,6 +146,13 @@ SCGpuStats sc_gpu_stats(void) {
 }
 double sc_uptime_seconds(void) { return sysinfo::uptimeSeconds(); }
 void   sc_load_average(double out[3]) { sysinfo::loadAverage(out); }
+int64_t sc_process_start_time(int pid) {
+    if (pid <= 1) return 0;
+    proc_bsdinfo info{};
+    if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, sizeof(info)) != sizeof(info)) return 0;
+    return int64_t(info.pbi_start_tvsec) * 1000000 + info.pbi_start_tvusec;
+}
+
 bool   sc_is_root(void) { return sysinfo::isRoot(); }
 
 } // extern "C"

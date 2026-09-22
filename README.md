@@ -71,6 +71,8 @@ macOS pokazuje CPU i pamięć procesów innych użytkowników oraz liczniki ener
 
 Pakiet zawiera demona `online.equishow.vitals.helper`. Aplikacja próbuje najpierw `SMAppService` (zatwierdzenie w Elementach logowania), a gdy macOS odrzuci demona podpisanego certyfikatem zespołu osobistego, używa `SMJobBless`: jednorazowa autoryzacja instaluje pomocnika do `/Library/PrivilegedHelperTools`. Pomocnik udostępnia przez XPC pełną listę procesów, odczyty mocy (`powermetrics`) i akcje na usługach launchd. Włączenie: **Ustawienia → Pomocnik i uprawnienia → „Włącz pomocnika…”**, wyłączenie tym samym przyciskiem (usuwa plist i binarkę).
 
+Po uruchomieniu nowszej wersji Vitals aplikacja automatycznie sprawdza wersję aktywnego pomocnika i aktualizuje starszą. Zachowuje sposób instalacji (`SMJobBless` lub `SMAppService`) i potwierdza przez XPC wersję uruchomionego procesu. macOS może ponownie poprosić o hasło lub zatwierdzenie w Elementach logowania. Po anulowaniu lub błędzie nie ponawia automatycznej próby w tej samej sesji; można użyć **„Zaktualizuj pomocnika…”** w Ustawieniach. Wyłączony pomocnik nie jest automatycznie instalowany, a nowsza wersja nie jest zastępowana starszą.
+
 Do zbudowania pomocnika potrzebny jest certyfikat **Apple Development** (darmowe konto Apple ID wystarczy) — reguły `SMAuthorizedClients` / `SMPrivilegedExecutables` są generowane z OU certyfikatu przy budowaniu:
 
 1. Xcode → Settings… → Accounts → „+” → zaloguj się Apple ID.
@@ -104,6 +106,8 @@ Z podpisem (konieczny dla pomocnika) i wydanie na GitHuba:
 CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" ./build.sh
 CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" ./release.sh --publish --notes "Opis zmian"
 ```
+
+Testy regresyjne uruchomisz poleceniem `swift test` — także w czystej kopii repozytorium, bez wcześniejszego pakowania aplikacji. Zestaw obejmuje XPC, bezpieczeństwo akcji procesów, aktualizacje, polecenia systemowe, świeżość pomiarów i operacje plikowe. [Opis poprawek i zakres weryfikacji](docs/review-fixes.md).
 
 `open Package.swift` otwiera projekt w Xcode (schemat `Vitals`). Punkty przerwania działają zarówno w Swifcie, jak i w C++ w `Sources/SysCore`.
 

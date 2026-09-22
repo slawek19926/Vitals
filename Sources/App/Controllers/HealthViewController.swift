@@ -165,7 +165,8 @@ final class HealthViewController: NSViewController, NSTableViewDataSource, NSTab
         panel.message = L("Każdy pomiar będzie dopisywany do tego pliku aż do zatrzymania")
         panel.begin { [weak self] resp in
             guard resp == .OK, let url = panel.url else { return }
-            HistoryExport.shared.startRecording(to: url)
+            do { try HistoryExport.shared.startRecording(to: url) }
+            catch { self?.presentInfo(L("Nie udało się zapisać pliku") + ": " + error.localizedDescription) }
             self?.updateRecordButton()
         }
     }

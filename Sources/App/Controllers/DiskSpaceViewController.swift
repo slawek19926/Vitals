@@ -1,5 +1,6 @@
 // DiskSpaceViewController.swift - „Miejsce na dysku”: skanowanie woluminu/katalogu, treemap, typy plików, największe foldery i pliki
 import AppKit
+import HelperKit
 
 final class FSNode {
     let name: String
@@ -397,7 +398,11 @@ final class DiskSpaceViewController: NSViewController, PageRefreshable {
     private var result: ScanResult?
     private var current: FSNode?
     private var scanning = false
-    private var cancelFlag = false
+    private let cancellation = Locked(false)
+    private var cancelFlag: Bool {
+        get { cancellation.withValue { $0 } }
+        set { cancellation.withValue { $0 = newValue } }
+    }
 
     override func loadView() {
         view = NSView()

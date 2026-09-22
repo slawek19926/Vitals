@@ -57,6 +57,7 @@ final class Updater {
     static let repository = "slawek19926/Vitals"
 
     private var checking = false
+    private var installing = false
     private var progressPanel: NSWindow?
 
     // MARK: - sprawdzanie
@@ -71,7 +72,7 @@ final class Updater {
 
     /// `userInitiated` – pokazujemy też komunikat „masz najnowszą wersję” i błędy
     func check(userInitiated: Bool) {
-        guard !checking else { return }
+        guard !checking, !installing else { return }
         checking = true
         fetchLatest { [weak self] result in
             guard let self else { return }
@@ -154,70 +155,92 @@ final class Updater {
     }
 
     private func download(_ release: Release) {
-        let panel = showProgress(L("Pobieranie wersji") + " \(release.version.raw)…")
-        let task = URLSession.shared.downloadTask(with: release.zipURL) { [weak self] file, _, error in
+        guard !installing else { return }
+        installing = true
+        let panel = showProgress(L("Pobieranie i weryfikacja aktualizacji…"))
+        let destination = Bundle.main.bundleURL
+        let task = URLSession.shared.downloadTask(with: release.zipURL) { [weak self] file, response, error in
+            // Preserve the temporary file before URLSession's completion handler returns.
+            let preparation: Result<UpdateTransaction, Error>
+            do {
+                if let error { throw error }
+                guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode), let file else {
+                    throw UpdateError.badArchive
+                }
+                let download = try UpdateTransaction.preserveDownload(file)
+                preparation = Result { try Self.prepare(work: download.work, archive: download.archive, destination: destination, release: release) }
+            } catch { preparation = .failure(error) }
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self else {
+                    if case .success(let transaction) = preparation { Self.cleanup(transaction) }
+                    return
+                }
                 self.closeProgress(panel)
-                if let error { return self.alert(L("Pobieranie nie powiodło się"), error.localizedDescription, style: .warning) }
-                guard let file else { return self.alert(L("Pobieranie nie powiodło się"), "", style: .warning) }
-                do { try self.install(downloaded: file, release: release) }
-                catch { self.alert(L("Instalacja nie powiodła się"), error.localizedDescription, style: .warning) }
+                self.installing = false
+                switch preparation {
+                case .failure(let error): self.alert(L("Instalacja nie powiodła się"), error.localizedDescription, style: .warning)
+                case .success(let transaction): self.confirmInstall(transaction, release: release)
+                }
             }
         }
         task.resume()
     }
 
-    // MARK: - weryfikacja i podmiana
-
-    private func install(downloaded file: URL, release: Release) throws {
+    /// Runs on URLSession's background queue; no shell work blocks AppKit.
+    private static func prepare(work: URL, archive: URL, destination: URL, release: Release) throws -> UpdateTransaction {
         let fm = FileManager.default
-        let work = fm.temporaryDirectory.appendingPathComponent("VitalsUpdate-\(UUID().uuidString)")
-        try fm.createDirectory(at: work, withIntermediateDirectories: true)
-        let zip = work.appendingPathComponent("update.zip")
-        try fm.moveItem(at: file, to: zip)
-
-        // rozpakowanie zachowujące podpis i uprawnienia
-        let unpacked = work.appendingPathComponent("unpacked")
-        try fm.createDirectory(at: unpacked, withIntermediateDirectories: true)
-        guard Shell.status("/usr/bin/ditto", ["-x", "-k", zip.path, unpacked.path]) == 0 else { throw UpdateError.badArchive }
-
-        let apps = (try? fm.contentsOfDirectory(at: unpacked, includingPropertiesForKeys: nil)) ?? []
-        guard let newApp = apps.first(where: { $0.pathExtension == "app" }) else { throw UpdateError.badArchive }
-
-        // podpis musi być ważny i pochodzić od tego samego zespołu co zainstalowana aplikacja
-        guard Shell.status("/usr/bin/codesign", ["--verify", "--strict", newApp.path]) == 0 else { throw UpdateError.notSigned }
-        let team = Self.teamIdentifier(of: newApp.path)
-        let ourTeam = Self.teamIdentifier(of: Bundle.main.bundlePath)
-        guard let team, let ourTeam, team == ourTeam else { throw UpdateError.wrongIdentity }
-        guard Bundle(url: newApp)?.bundleIdentifier == Bundle.main.bundleIdentifier else { throw UpdateError.wrongIdentity }
-
-        let dest = Bundle.main.bundleURL
-        guard fm.isWritableFile(atPath: dest.deletingLastPathComponent().path) else {
-            throw UpdateError.cannotReplace(dest.deletingLastPathComponent().path)
+        let parent = destination.deletingLastPathComponent()
+        let id = UUID().uuidString
+        let staged = parent.appendingPathComponent(".Vitals-staged-\(id).app")
+        let backup = parent.appendingPathComponent("Vitals-previous-\(id).app")
+        var prepared = false
+        defer {
+            if !prepared { try? fm.removeItem(at: staged); try? fm.removeItem(at: work) }
         }
+        let unpacked = work.appendingPathComponent("unpacked")
+        try fm.createDirectory(at: unpacked, withIntermediateDirectories: false)
+        guard Shell.status("/usr/bin/ditto", ["-x", "-k", archive.path, unpacked.path]) == 0 else { throw UpdateError.badArchive }
+        let apps = try fm.contentsOfDirectory(at: unpacked, includingPropertiesForKeys: [.isSymbolicLinkKey])
+            .filter { $0.pathExtension == "app" }
+        guard apps.count == 1, let newApp = apps.first,
+              try newApp.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink != true else { throw UpdateError.badArchive }
+        guard fm.isWritableFile(atPath: parent.path) else { throw UpdateError.cannotReplace(parent.path) }
+        // Stage on the destination volume before verifying and before closing the running app.
+        guard Shell.status("/usr/bin/ditto", [newApp.path, staged.path]) == 0 else { throw UpdateError.cannotReplace(parent.path) }
+        guard let ourTeam = teamIdentifier(of: destination.path),
+              let requirement = PeerTrust.requirement(identifier: PeerTrust.appIdentifier, team: ourTeam) else { throw UpdateError.wrongIdentity }
+        guard Shell.status("/usr/bin/codesign", ["--verify", "--deep", "--strict", "-R", requirement, staged.path]) == 0 else { throw UpdateError.notSigned }
+        guard let newBundle = Bundle(url: staged), let oldBundle = Bundle(url: destination),
+              newBundle.bundleIdentifier == oldBundle.bundleIdentifier else { throw UpdateError.wrongIdentity }
+        let short = newBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let build = newBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        guard SemVersion(short + "." + build) == release.version else { throw UpdateError.badArchive }
+        prepared = true
+        return UpdateTransaction(work: work, staged: staged, destination: destination, backup: backup)
+    }
 
-        let a = NSAlert()
-        a.messageText = L("Zainstalować wersję") + " \(release.version.raw)?"
-        a.informativeText = L("Aplikacja zostanie zamknięta, pakiet podmieniony i uruchomiony ponownie.")
-        a.addButton(withTitle: L("Zainstaluj i uruchom ponownie"))
-        a.addButton(withTitle: L("Anuluj"))
-        guard a.runModal() == .alertFirstButtonReturn else { try? fm.removeItem(at: work); return }
+    private static func cleanup(_ transaction: UpdateTransaction) {
+        try? FileManager.default.removeItem(at: transaction.staged)
+        try? FileManager.default.removeItem(at: transaction.work)
+    }
 
-        // Podmiana po wyjściu z aplikacji: skrypt czeka na zakończenie procesu, przenosi pakiet i uruchamia nową wersję
-        let script = """
-        while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done
-        /usr/bin/ditto "\(newApp.path)" "\(dest.path).new" || exit 1
-        /bin/rm -rf "\(dest.path)"
-        /bin/mv "\(dest.path).new" "\(dest.path)"
-        /bin/rm -rf "\(work.path)"
-        /usr/bin/open "\(dest.path)"
-        """
-        let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: "/bin/sh")
-        proc.arguments = ["-c", script]
-        try proc.run()
-        NSApp.terminate(nil)
+    private func confirmInstall(_ transaction: UpdateTransaction, release: Release) {
+        let alert = NSAlert()
+        alert.messageText = L("Zainstalować wersję") + " \(release.version.raw)?"
+        alert.informativeText = L("Aplikacja zostanie uruchomiona ponownie. Poprzednia wersja pozostanie obok jako kopia zapasowa.")
+        alert.addButton(withTitle: L("Zainstaluj i uruchom ponownie"))
+        alert.addButton(withTitle: L("Anuluj"))
+        guard alert.runModal() == .alertFirstButtonReturn else { Self.cleanup(transaction); return }
+        do {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/sh")
+            process.arguments = transaction.arguments(waitForPID: ProcessInfo.processInfo.processIdentifier)
+            try process.run()
+            NSApp.terminate(nil)
+        } catch {
+            Self.cleanup(transaction)
+            self.alert(L("Instalacja nie powiodła się"), error.localizedDescription, style: .warning)
+        }
     }
 
     /// Identyfikator zespołu z podpisu pakietu (`codesign -dv`)

@@ -1,5 +1,6 @@
 // BenchmarksViewController.swift - „Benchmarki”: CPU (1 rdzeń / wszystkie), pamięć, dysk (zapis/odczyt); historia wyników
 import AppKit
+import HelperKit
 import Metal
 
 /// Pojedynczy test, który można zaznaczyć i uruchomić osobno
@@ -95,40 +96,45 @@ enum Bench {
         return x ^ UInt64(f.bitPattern)
     }
 
-    static func cpuSingle(seconds: Double) -> Double {
+    static func cpuSingle(seconds: Double, shouldCancel: () -> Bool = { false }) -> Double {
         let chunk = 2_000_000
         var ops = 0
         var acc: UInt64 = 1
-        let end = CACurrentMediaTime() + seconds
-        while CACurrentMediaTime() < end { acc = work(chunk, seed: acc); ops += chunk }
-        return Double(ops) / seconds / 1e6 + Double(acc & 1) * 1e-9
+        let start = CACurrentMediaTime()
+        let end = start + seconds
+        while CACurrentMediaTime() < end && !shouldCancel() { acc = work(chunk, seed: acc); ops += chunk }
+        return Double(ops) / max(CACurrentMediaTime() - start, 1e-6) / 1e6 + Double(acc & 1) * 1e-9
     }
 
-    static func cpuMulti(seconds: Double) -> Double {
+    static func cpuMulti(seconds: Double, shouldCancel: () -> Bool = { false }) -> Double {
         let n = ProcessInfo.processInfo.activeProcessorCount
-        var totals = [Double](repeating: 0, count: n)
-        DispatchQueue.concurrentPerform(iterations: n) { i in totals[i] = cpuSingle(seconds: seconds) }
-        return totals.reduce(0, +)
+        let totals = Locked([Double](repeating: 0, count: n))
+        DispatchQueue.concurrentPerform(iterations: n) { i in
+            let result = cpuSingle(seconds: seconds, shouldCancel: shouldCancel)
+            totals.withValue { $0[i] = result }
+        }
+        return totals.withValue { $0.reduce(0, +) }
     }
 
-    static func memory(seconds: Double) -> Double {
+    static func memory(seconds: Double, shouldCancel: () -> Bool = { false }) -> Double {
         let size = 256 * 1024 * 1024
         let a = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 4096)
         let b = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 4096)
         defer { a.deallocate(); b.deallocate() }
         memset(a, 1, size); memset(b, 2, size)
         var bytes: UInt64 = 0
-        let end = CACurrentMediaTime() + seconds
+        let start = CACurrentMediaTime()
+        let end = start + seconds
         var flip = false
-        while CACurrentMediaTime() < end {
+        while CACurrentMediaTime() < end && !shouldCancel() {
             if flip { memcpy(a, b, size) } else { memcpy(b, a, size) }
             flip.toggle(); bytes += UInt64(size) * 2   // odczyt + zapis
         }
-        return Double(bytes) / seconds / 1e9
+        return Double(bytes) / max(CACurrentMediaTime() - start, 1e-6) / 1e9
     }
 
     /// Obliczenia na GPU: prosty kernel wektorowy w Metalu; zwraca GFLOP/s albo 0, gdy brak wsparcia
-    static func gpu(seconds: Double) -> Double {
+    static func gpu(seconds: Double, shouldCancel: () -> Bool = { false }) -> Double {
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else { return 0 }
         let source = """
         #include <metal_stdlib>
@@ -147,7 +153,7 @@ enum Bench {
         var iters: UInt32 = 512
         let start = CACurrentMediaTime()
         var flops: Double = 0
-        while CACurrentMediaTime() - start < seconds {
+        while CACurrentMediaTime() - start < seconds && !shouldCancel() {
             guard let cmd = queue.makeCommandBuffer(), let enc = cmd.makeComputeCommandEncoder() else { break }
             enc.setComputePipelineState(pipeline)
             enc.setBuffer(buffer, offset: 0, index: 0)
@@ -158,34 +164,54 @@ enum Bench {
             enc.endEncoding()
             cmd.commit()
             cmd.waitUntilCompleted()
+            guard cmd.status == .completed else { return 0 }
             flops += Double(count) * Double(iters) * 2   // fma = mnożenie + dodawanie
         }
         let elapsed = CACurrentMediaTime() - start
         return flops / max(elapsed, 1e-6) / 1e9
     }
 
-    static func disk(dir: String, totalMB: Int = 512) -> (write: Double, read: Double) {
-        let path = dir + "/.mactaskmanager-bench-\(getpid()).bin"
-        defer { unlink(path) }
+    static func disk(dir: String, totalMB: Int = 512, shouldCancel: () -> Bool = { false }) throws -> (write: Double, read: Double) {
+        guard totalMB > 0 else { throw POSIXError(.EINVAL) }
+        let path = URL(fileURLWithPath: dir).appendingPathComponent(".vitals-bench-\(UUID().uuidString)").path
+        let fd = open(path, O_CREAT | O_EXCL | O_RDWR | O_NOFOLLOW, 0o600)
+        guard fd >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        defer { close(fd); unlink(path) }
+        func check(_ result: Int32) throws {
+            guard result >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        }
+        try check(fcntl(fd, F_NOCACHE, 1))
         let chunk = 4 * 1024 * 1024
-        let buf = UnsafeMutableRawPointer.allocate(byteCount: chunk, alignment: 4096)
-        defer { buf.deallocate() }
-        for i in stride(from: 0, to: chunk, by: 8) { buf.storeBytes(of: UInt64(i) &* 0x9E3779B97F4A7C15, toByteOffset: i, as: UInt64.self) }
-        let fd = open(path, O_CREAT | O_TRUNC | O_RDWR, 0o600)
-        guard fd >= 0 else { return (0, 0) }
-        fcntl(fd, F_NOCACHE, 1)
+        let buffer = UnsafeMutableRawPointer.allocate(byteCount: chunk, alignment: 4096)
+        defer { buffer.deallocate() }
+        for i in stride(from: 0, to: chunk, by: 8) { buffer.storeBytes(of: UInt64(i) &* 0x9E3779B97F4A7C15, toByteOffset: i, as: UInt64.self) }
+        let target = totalMB * 1024 * 1024
+        var written = 0
         let t0 = CACurrentMediaTime()
-        for _ in 0..<totalMB / 4 { _ = write(fd, buf, chunk) }
-        fcntl(fd, F_FULLFSYNC)
-        let tw = CACurrentMediaTime() - t0
-        lseek(fd, 0, SEEK_SET)
+        while written < target {
+            if shouldCancel() { throw CocoaError(.userCancelled) }
+            let count = write(fd, buffer, min(chunk, target - written))
+            if count < 0 && errno == EINTR { continue }
+            guard count > 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+            written += count
+        }
+        try check(fcntl(fd, F_FULLFSYNC))
+        let writeTime = CACurrentMediaTime() - t0
+        guard lseek(fd, 0, SEEK_SET) == 0 else { throw POSIXError(.EIO) }
         let t1 = CACurrentMediaTime()
-        var readBytes = 0
-        while true { let r = read(fd, buf, chunk); if r <= 0 { break }; readBytes += r }
-        let tr = CACurrentMediaTime() - t1
-        close(fd)
-        return (Double(totalMB) / max(tw, 1e-6), Double(readBytes) / 1e6 / max(tr, 1e-6))
+        var bytesRead = 0
+        while true {
+            if shouldCancel() { throw CocoaError(.userCancelled) }
+            let count = read(fd, buffer, chunk)
+            if count < 0 && errno == EINTR { continue }
+            guard count >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+            if count == 0 { break }
+            bytesRead += count
+        }
+        guard bytesRead == written else { throw POSIXError(.EIO) }
+        return (Double(written) / 1e6 / max(writeTime, 1e-6), Double(bytesRead) / 1e6 / max(CACurrentMediaTime() - t1, 1e-6))
     }
+
 }
 
 
@@ -202,7 +228,11 @@ final class BenchmarksViewController: NSViewController, NSTableViewDataSource, N
     private var history: [BenchResult] = []
     private var selected: Set<BenchTest> = Set(BenchTest.allCases)
     private var running = false
-    private var cancelRequested = false
+    private let cancellation = Locked(false)
+    private var cancelRequested: Bool {
+        get { cancellation.withValue { $0 } }
+        set { cancellation.withValue { $0 = newValue } }
+    }
     private let hw = Monitor.shared.hardware
     /// Czas jednego testu: szybki, standardowy, dokładny
     private var seconds: Double { [1.0, 3.0, 6.0][max(0, min(2, durationPopup.indexOfSelectedItem))] }
@@ -389,6 +419,8 @@ final class BenchmarksViewController: NSViewController, NSTableViewDataSource, N
         let secs = seconds
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var values: [String: Double] = [:]
+            var failures: [String] = []
+            let cancelled = { self?.cancelRequested ?? true }
             for (i, test) in order.enumerated() {
                 if self?.cancelRequested == true { break }
                 DispatchQueue.main.async {
@@ -396,20 +428,33 @@ final class BenchmarksViewController: NSViewController, NSTableViewDataSource, N
                     self?.progress.value = Double(i) / Double(order.count)
                 }
                 let v: Double
+                do {
                 switch test {
-                case .cpuSingle: v = Bench.cpuSingle(seconds: secs)
-                case .cpuMulti: v = Bench.cpuMulti(seconds: secs)
-                case .memory: v = Bench.memory(seconds: max(1, secs * 0.7))
+                case .cpuSingle: v = Bench.cpuSingle(seconds: secs, shouldCancel: cancelled)
+                case .cpuMulti: v = Bench.cpuMulti(seconds: secs, shouldCancel: cancelled)
+                case .memory: v = Bench.memory(seconds: max(1, secs * 0.7), shouldCancel: cancelled)
                 case .diskWrite, .diskRead:
                     if let cached = values["diskPair"] {
                         v = test == .diskWrite ? cached : (values["diskReadPair"] ?? 0)
                     } else {
-                        let d = Bench.disk(dir: dir, totalMB: secs >= 6 ? 1024 : (secs <= 1 ? 256 : 512))
+                        let d = try Bench.disk(dir: dir, totalMB: secs >= 6 ? 1024 : (secs <= 1 ? 256 : 512), shouldCancel: cancelled)
                         values["diskPair"] = d.write
                         values["diskReadPair"] = d.read
                         v = test == .diskWrite ? d.write : d.read
                     }
-                case .gpu: v = Bench.gpu(seconds: max(1, secs * 0.7))
+                case .gpu: v = Bench.gpu(seconds: max(1, secs * 0.7), shouldCancel: cancelled)
+                }
+                } catch {
+                    if cancelled() { break }
+                    failures.append(L(test.title) + ": " + error.localizedDescription)
+                    DispatchQueue.main.async { self?.tiles[test]?.value.update("—", flash: false) }
+                    continue
+                }
+                if cancelled() { break }
+                guard v.isFinite, v > 0 else {
+                    failures.append(L(test.title) + ": " + L("Brak wyniku"))
+                    DispatchQueue.main.async { self?.tiles[test]?.value.update("—", flash: false) }
+                    continue
                 }
                 values[test.rawValue] = v
                 DispatchQueue.main.async { self?.tiles[test]?.value.update(test.format(v), flash: false) }
@@ -430,6 +475,10 @@ final class BenchmarksViewController: NSViewController, NSTableViewDataSource, N
                 }
                 self.historyTable.reloadData()
                 self.testTable.reloadData()
+                if !failures.isEmpty {
+                    let alert = NSAlert(); alert.messageText = L("Nie wszystkie testy zakończyły się poprawnie")
+                    alert.informativeText = failures.joined(separator: "\n"); alert.runModal()
+                }
                 self.running = false
                 self.cancelRequested = false
                 self.runSelected.isEnabled = true

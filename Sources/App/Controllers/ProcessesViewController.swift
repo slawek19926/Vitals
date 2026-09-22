@@ -213,6 +213,12 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
             c.title = L(t); c.width = w; c.minWidth = 50
             c.sortDescriptorPrototype = NSSortDescriptor(key: id, ascending: ["name", "user", "state", "path", "pid"].contains(id))
             if ["pid", "cpu", "mem", "threads", "time", "diskR", "diskW", "energy", "wakeups"].contains(id) { c.headerCell.alignment = .right }
+            switch id {
+            case "cpu": c.headerToolTip = L("100% oznacza jeden w pełni obciążony rdzeń. Proces wielowątkowy może przekroczyć 100%.")
+            case "energy": c.headerToolTip = L("Szacunkowy wskaźnik na podstawie CPU, operacji dyskowych i przełączeń kontekstu; nie jest pomiarem w watach.")
+            case "wakeups": c.headerToolTip = L("Przełączenia kontekstu na sekundę; przybliżenie aktywności procesu, nie bezpośredni pomiar wybudzeń.")
+            default: break
+            }
             outline.addTableColumn(c)
         }
         outline.outlineTableColumn = outline.tableColumns[0]
@@ -272,7 +278,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
         var seen = Set<Int>()
         for p in all {
             seen.insert(p.pid)
-            if let n = nodes[p.pid], n.info.startTime == p.startTime {
+            if let n = nodes[p.pid], n.info.startTimeMicros == p.startTimeMicros {
                 n.info = p; n.exited = false; n.exitedAt = nil
             } else {
                 nodes[p.pid] = ProcNode(p)
@@ -385,7 +391,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
     private func comparator() -> (ProcNode, ProcNode) -> Bool {
         let key = sortKey, asc = sortAsc
         return { x, y in
-            let a = x.info, b = y.info
+            let a = asc ? x.info : y.info, b = asc ? y.info : x.info
             let r: Bool
             switch key {
             case "name": r = a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
@@ -403,7 +409,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
             case "path": r = a.path < b.path
             default: r = a.pid < b.pid
             }
-            return asc ? r : !r
+            return r
         }
     }
 
@@ -421,7 +427,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
             return
         }
         let p = n.info
-        endButton.isEnabled = !n.exited; forceButton.isEnabled = !n.exited
+        endButton.isEnabled = !n.exited && n.info.actionIdentity != nil; forceButton.isEnabled = endButton.isEnabled
         dName.stringValue = "\(p.name) (\(p.pid))" + (n.exited ? " — " + L("zakończony") : "")
         dName.textColor = n.exited ? P.bad : P.text
         dPath.stringValue = p.path.isEmpty ? L("(ścieżka niedostępna)") : p.path
@@ -611,6 +617,13 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
         }
         let ok = selected != nil && !(selected?.exited ?? true)
         for it in menu.items { it.isEnabled = ok }
+        let canAct = ok && selected?.info.actionIdentity != nil
+        let mutations: Set<Selector> = [#selector(endProcess), #selector(forceEndProcess), #selector(endTree),
+                                       #selector(forceEndTree), #selector(suspendProcess), #selector(resumeProcess)]
+        for item in menu.items {
+            if let action = item.action, mutations.contains(action) { item.isEnabled = canAct }
+            if let submenu = item.submenu { for child in submenu.items { child.isEnabled = canAct } }
+        }
         menu.items.first?.state = (selected != nil && followPid == selected?.pid) ? .on : .off
     }
 
@@ -619,7 +632,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
     @objc func forceEndProcess() { terminate(force: true) }
 
     private func terminate(force: Bool) {
-        guard let n = selected, !n.exited else { return }
+        guard let n = selected, !n.exited, n.info.actionIdentity != nil else { return }
         let p = n.info
         let alert = NSAlert()
         alert.messageText = (force ? L("Wymusić zakończenie procesu „") : L("Zakończyć proces „")) + "\(p.name)” (PID \(p.pid))?"
@@ -631,34 +644,27 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
         guard let w = view.window else { return }
         alert.beginSheetModal(for: w) { resp in
             guard resp == .alertFirstButtonReturn else { return }
-            if kill(pid_t(p.pid), force ? SIGKILL : SIGTERM) != 0 {
+            if let message = ProcessActions.signal(force ? SIGKILL : SIGTERM, process: p) {
                 let err = NSAlert()
                 err.messageText = L("Nie udało się zakończyć procesu „") + "\(p.name)”"
-                var why = String(cString: strerror(errno))
-                if errno == EPERM { why += "\n\n" + L("Proces należy do innego użytkownika. Użyj „Ustawienia → Uruchom ponownie jako administrator…”.") }
-                err.informativeText = why
+                err.informativeText = message
                 err.alertStyle = .critical
                 err.beginSheetModal(for: w)
             }
         }
     }
 
-    private func signal(_ sig: Int32, to pid: Int, name: String) {
-        if kill(pid_t(pid), sig) != 0 {
+    private func signal(_ sig: Int32, to process: ProcInfo, name: String) {
+        if let message = ProcessActions.signal(sig, process: process) {
             let err = NSAlert()
-            err.messageText = L("Nie udało się wysłać sygnału") + " \(name) " + L("do PID") + " \(pid)"
-            var why = String(cString: strerror(errno))
-            if errno == EPERM { why += "\n\n" + L("Proces należy do innego użytkownika. Użyj „Ustawienia → Uruchom ponownie jako administrator…”.") }
-            err.informativeText = why; err.alertStyle = .warning; err.runModal()
+            err.messageText = L("Nie udało się wysłać sygnału") + " \(name) · PID \(process.pid)"
+            err.informativeText = message; err.alertStyle = .warning; err.runModal()
         }
     }
 
-    /// Wszystkie PID-y w poddrzewie (dzieci najpierw)
-    private func treePids(_ n: ProcNode) -> [Int] {
-        var out: [Int] = []
-        for c in n.children { out += treePids(c) }
-        out.append(n.pid)
-        return out
+    private func treeProcesses(_ node: ProcNode) -> [ProcInfo] {
+        guard !node.exited, node.info.actionIdentity != nil else { return [] }
+        return node.children.flatMap(treeProcesses) + [node.info]
     }
 
     @objc func followProcess() {
@@ -670,32 +676,49 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
     @objc func endTree() { terminateTree(force: false) }
     @objc func forceEndTree() { terminateTree(force: true) }
     private func terminateTree(force: Bool) {
-        guard let n = selected, !n.exited else { return }
-        let pids = treePids(n)
+        guard let n = selected, !n.exited, n.info.actionIdentity != nil else { return }
+        let processes = treeProcesses(n)
         let alert = NSAlert()
-        alert.messageText = (force ? L("Wymusić zakończenie drzewa procesów „") : L("Zakończyć drzewo procesów „")) + "\(n.info.name)” (\(pids.count) " + L("procesów") + ")?"
+        alert.messageText = (force ? L("Wymusić zakończenie drzewa procesów „") : L("Zakończyć drzewo procesów „")) + "\(n.info.name)” (\(processes.count) " + L("procesów") + ")?"
         alert.informativeText = L("Sygnał") + " \(force ? "SIGKILL" : "SIGTERM") " + L("zostanie wysłany do procesu i wszystkich jego potomków.")
         alert.alertStyle = .warning
         alert.addButton(withTitle: force ? L("Wymuś zakończenie") : L("Zakończ")); alert.addButton(withTitle: L("Anuluj"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        for pid in pids { _ = kill(pid_t(pid), force ? SIGKILL : SIGTERM) }
+        let failures = processes.compactMap { process -> String? in
+            ProcessActions.signal(force ? SIGKILL : SIGTERM, process: process).map { "\(process.name) (\(process.pid)): \($0)" }
+        }
+        if !failures.isEmpty {
+            let error = NSAlert(); error.messageText = L("Nie udało się zakończyć wszystkich procesów")
+            error.informativeText = failures.prefix(10).joined(separator: "\n"); error.runModal()
+        }
     }
 
-    @objc func suspendProcess() { if let n = selected { signal(SIGSTOP, to: n.pid, name: "SIGSTOP") } }
-    @objc func resumeProcess() { if let n = selected { signal(SIGCONT, to: n.pid, name: "SIGCONT") } }
-    @objc func sendSignal(_ sender: NSMenuItem) { if let n = selected { signal(Int32(sender.tag), to: n.pid, name: sender.title) } }
+    @objc func suspendProcess() { if let n = selected, !n.exited { signal(SIGSTOP, to: n.info, name: "SIGSTOP") } }
+    @objc func resumeProcess() { if let n = selected, !n.exited { signal(SIGCONT, to: n.info, name: "SIGCONT") } }
+    @objc func sendSignal(_ sender: NSMenuItem) { if let n = selected, !n.exited { signal(Int32(sender.tag), to: n.info, name: sender.title) } }
 
     @objc func setPriority(_ sender: NSMenuItem) {
-        guard let n = selected else { return }
+        guard let n = selected, !n.exited, let identity = n.info.actionIdentity else { return }
         let nice = sender.tag
-        DispatchQueue.global().async {
-            var out = Shell.run("/usr/bin/renice", ["-n", "\(nice)", "-p", "\(n.pid)"])
-            if nice < 0 || out.contains("Permission") || getpriority(PRIO_PROCESS, id_t(n.pid)) != Int32(nice) {
-                // podniesienie priorytetu wymaga administratora → osascript
-                let script = "do shell script \"/usr/bin/renice -n \(nice) -p \(n.pid)\" with administrator privileges"
-                out = Shell.run("/usr/bin/osascript", ["-e", script], timeout: 60)
+        guard (-20...20).contains(nice), identity.isCurrent() else { return }
+        // The helper rechecks the captured identity immediately before setpriority.
+        DispatchQueue.global(qos: .userInitiated).async {
+            var message: String?
+            if !identity.isCurrent() {
+                message = L("Proces zakończył się, zmienił tożsamość lub jest chroniony. Odśwież listę.")
+            } else if setpriority(PRIO_PROCESS, id_t(identity.pid), Int32(nice)) != 0 {
+                if HelperClient.shared.isEnabled {
+                    message = HelperClient.shared.setPriority(pid: Int32(identity.pid), startTimeMicros: identity.startTimeMicros, value: Int32(nice))
+                } else {
+                    message = String(cString: strerror(errno)) + "\n" + L("Włącz lub zaktualizuj pomocnika w Ustawieniach.")
+                }
             }
-            _ = out
+            if let message {
+                DispatchQueue.main.async {
+                    let error = NSAlert(); error.messageText = L("Nie udało się zmienić priorytetu")
+                    error.informativeText = message; error.runModal()
+                }
+            }
         }
     }
 

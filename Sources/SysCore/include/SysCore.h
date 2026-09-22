@@ -24,6 +24,7 @@ typedef struct {
     uint64_t diskRead, diskWrite;   // łączne bajty we/wy procesu
     uint64_t contextSwitches;       // przełączenia kontekstu procesu
     int64_t  startTime;
+    int64_t  startTimeMicros;
     bool     accessible;
 } SCProcess;
 
@@ -170,6 +171,7 @@ double sc_gpu_utilization(void);      // 0..100, lub -1 gdy niedostępne
 double sc_uptime_seconds(void);
 void   sc_load_average(double out[3]);
 bool   sc_is_root(void);
+int64_t sc_process_start_time(int pid); // microseconds since epoch, 0 on error
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,7 @@
 // AppDelegate.swift - start aplikacji, menu, akcje globalne
 import AppKit
 import Security
+import ServiceManagement
 import HelperKit
 
 @main
@@ -30,14 +31,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.didBecomeKeyNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: .widgetsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(rebuildForLanguage), name: .languageChanged, object: nil)
+        NotificationCenter.default.addObserver(forName: .recordingFailed, object: nil, queue: .main) { note in
+            let alert = NSAlert(); alert.messageText = L("Nagrywanie pomiarów zostało przerwane")
+            alert.informativeText = note.object as? String ?? ""; alert.runModal()
+        }
+        NotificationCenter.default.addObserver(forName: .helperUpdateFailed, object: nil, queue: .main) { note in
+            let alert = NSAlert(); alert.messageText = L("Nie udało się zaktualizować pomocnika")
+            alert.informativeText = (note.object as? Error)?.localizedDescription ?? ""
+            alert.alertStyle = .warning; alert.runModal()
+        }
+        NotificationCenter.default.addObserver(forName: .helperApprovalRequired, object: nil, queue: .main) { _ in
+            let alert = NSAlert(); alert.messageText = L("Pomocnik wymaga zatwierdzenia")
+            alert.informativeText = L("wymaga zatwierdzenia w Ustawieniach systemowych → Ogólne → Elementy logowania i rozszerzenia")
+            alert.addButton(withTitle: L("Otwórz Elementy logowania…"))
+            alert.addButton(withTitle: L("Później"))
+            if alert.runModal() == .alertFirstButtonReturn { SMAppService.openSystemSettingsLoginItems() }
+        }
         Monitor.shared.start()
         NSApp.activate(ignoringOtherApps: true)
         if CommandLine.arguments.contains("-registerHelper") {
-            do { try HelperClient.shared.register(); NSLog("helper register OK, status=%@", HelperClient.shared.statusText) }
-            catch { NSLog("helper register FAILED: %@", error.localizedDescription) }
+            HelperClient.shared.updateHelper()
         }
         if CommandLine.arguments.contains("-helperStatus") { NSLog("helper status=%@", HelperClient.shared.statusText) }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in self?.maybeAskForAdmin() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { HelperClient.shared.fetchVersion() }
         // sprawdzenie aktualizacji dopiero po ustabilizowaniu okna, żeby start nie czekał na sieć
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { Updater.shared.checkOnLaunch() }
     }
@@ -61,8 +78,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     /// Przy pierwszym uruchomieniu pytamy, czy działać z uprawnieniami administratora
     private func maybeAskForAdmin() {
         guard !Monitor.isRoot else { return }
-        // Zainstalowany pomocnik uprzywilejowany daje pełne dane – żadnych monitów o hasło
-        if HelperClient.shared.isEnabled { Prefs.shared.alwaysAdmin = false; return }
+        // Do not compete with the helper's installation/approval flow.
+        let helper = HelperClient.shared
+        if helper.isEnabled || helper.updating || helper.requiresApproval { Prefs.shared.alwaysAdmin = false; return }
         if Prefs.shared.alwaysAdmin { relaunchAsAdmin(); return }
         guard !UserDefaults.standard.bool(forKey: "adminAsked") else { return }
         let alert = NSAlert()
@@ -270,15 +288,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         var authRef: AuthorizationRef?
         guard AuthorizationCreate(nil, nil, [], &authRef) == errAuthorizationSuccess, let auth = authRef else { return false }
         defer { AuthorizationFree(auth, [.destroyRights]) }
-        var item = kAuthorizationRightExecute.withCString { AuthorizationItem(name: $0, valueLength: 0, value: nil, flags: 0) }
-        var rights = AuthorizationRights(count: 1, items: &item)
         let flags: AuthorizationFlags = [.interactionAllowed, .preAuthorize, .extendRights]
-        guard AuthorizationCopyRights(auth, &rights, nil, flags, nil) == errAuthorizationSuccess else { return false }
+        guard AuthorizationRequest.copyRight(kAuthorizationRightExecute, auth: auth, flags: flags) == errAuthorizationSuccess else { return false }
         // AuthorizationExecuteWithPrivileges jest przestarzałe, ale nadal dostępne – ładujemy dynamicznie
         typealias ExecFn = @convention(c) (AuthorizationRef, UnsafePointer<CChar>, AuthorizationFlags, UnsafePointer<UnsafeMutablePointer<CChar>?>, UnsafeMutablePointer<UnsafeMutablePointer<FILE>?>?) -> OSStatus
         guard let h = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY), let sym = dlsym(h, "AuthorizationExecuteWithPrivileges") else { return false }
         let fn = unsafeBitCast(sym, to: ExecFn.self)
-        var cargs: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
+        let cargs: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
         defer { for c in cargs { free(c) } }
         let status = cargs.withUnsafeBufferPointer { buf in exe.withCString { fn(auth, $0, [], buf.baseAddress!, nil) } }
         return status == errAuthorizationSuccess

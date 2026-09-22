@@ -10,12 +10,15 @@ func cStr<T>(_ tuple: T) -> String {
 /// Ciągły odczyt powermetrics (dostępne tylko dla roota): moc CPU/GPU/ANE i taktowania
 final class PowerMetricsReader {
     private var process: Process?
+    private let readerQueue = DispatchQueue(label: "helper.powermetrics")
     private let lock = NSLock()
     private var latest: [String: Double] = [:]
     private var updated = Date.distantPast
     private var buffer = Data()
 
-    func start() {
+    func start() { readerQueue.async { self.startProcess() } }
+
+    private func startProcess() {
         guard process == nil, FileManager.default.fileExists(atPath: "/usr/bin/powermetrics") else { return }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/powermetrics")
@@ -26,13 +29,22 @@ final class PowerMetricsReader {
         pipe.fileHandleForReading.readabilityHandler = { [weak self] h in
             let d = h.availableData
             if d.isEmpty { return }
-            self?.consume(d)
+            self?.readerQueue.async { self?.consume(d) }
         }
         p.terminationHandler = { [weak self] _ in
-            self?.process = nil
-            DispatchQueue.global().asyncAfter(deadline: .now() + 5) { self?.start() }   // restart po awarii
+            pipe.fileHandleForReading.readabilityHandler = nil
+            self?.readerQueue.async {
+                guard let self else { return }
+                self.process = nil
+                self.buffer.removeAll()
+                self.lock.lock(); self.latest = [:]; self.updated = .distantPast; self.lock.unlock()
+                self.readerQueue.asyncAfter(deadline: .now() + 5) { self.startProcess() }
+            }   // restart po awarii
         }
-        do { try p.run(); process = p } catch { process = nil }
+        do { try p.run(); process = p } catch {
+            pipe.fileHandleForReading.readabilityHandler = nil
+            readerQueue.asyncAfter(deadline: .now() + 5) { self.startProcess() }
+        }
     }
 
     private func consume(_ d: Data) {
@@ -66,13 +78,13 @@ final class PowerMetricsReader {
             if let f = gpu["freq_hz"] as? NSNumber { out["gpu_freq"] = f.doubleValue }
             if let pw = gpu["gpu_power"] as? NSNumber { out["gpu_power"] = pw.doubleValue }
         }
-        lock.lock(); latest.merge(out) { _, new in new }; updated = Date(); lock.unlock()
+        lock.lock(); latest = out; updated = out.isEmpty ? .distantPast : Date(); lock.unlock()
     }
 
     /// Zwraca aktualne wartości, jeśli świeższe niż 5 s
-    func snapshot() -> [String: Double]? {
+    func snapshot() -> (values: [String: Double], date: Date)? {
         lock.lock(); defer { lock.unlock() }
-        return Date().timeIntervalSince(updated) < 5 ? latest : nil
+        return Date().timeIntervalSince(updated) < 5 ? (latest, updated) : nil
     }
 }
 
@@ -103,7 +115,7 @@ final class HelperService: NSObject, HelperProtocol {
                     let p = arr[i]
                     list.append(HelperProcess(pid: Int(p.pid), ppid: Int(p.ppid), uid: Int(p.uid), name: cStr(p.name), user: cStr(p.user), state: cStr(p.state), path: cStr(p.path),
                                               cpuPercent: p.cpuPercent, memBytes: p.memBytes, threads: Int(p.threads), cpuTimeNs: p.cpuTimeNs, startTime: p.startTime, accessible: p.accessible,
-                                              diskRead: p.diskRead, diskWrite: p.diskWrite, contextSwitches: p.contextSwitches))
+                                              diskRead: p.diskRead, diskWrite: p.diskWrite, contextSwitches: p.contextSwitches, startTimeMicros: p.startTimeMicros))
                 }
                 sc_free_processes(arr)
             }
@@ -117,7 +129,10 @@ final class HelperService: NSObject, HelperProtocol {
         queue.async {
             let p = sc_power_sample()
             var hp = HelperPower(sysWatts: p.sysWatts, cpuWatts: p.cpuWatts, gpuWatts: p.gpuWatts, aneWatts: p.aneWatts, dramWatts: p.dramWatts, available: p.available)
-            if let m = self.metrics.snapshot() {
+            hp.sampledAt = Date().timeIntervalSince1970
+            if let sample = self.metrics.snapshot() {
+                let m = sample.values
+                hp.sampledAt = sample.date.timeIntervalSince1970
                 // powermetrics podaje mW
                 hp.cpuWatts = (m["cpu_power"] ?? 0) / 1000
                 hp.gpuWatts = (m["gpu_power"] ?? 0) / 1000
@@ -136,25 +151,23 @@ final class HelperService: NSObject, HelperProtocol {
 
     func version(reply: @escaping (String) -> Void) { reply(helperVersion) }
 
+    func priority(pid: Int32, startTimeMicros: Int64, value: Int32, reply: @escaping (String) -> Void) {
+        guard pid > 1, startTimeMicros > 0, (-20...20).contains(value),
+              sc_process_start_time(pid) == startTimeMicros else { reply("Proces zakończył się lub jest chroniony."); return }
+        reply(setpriority(PRIO_PROCESS, id_t(pid), value) == 0 ? "" : String(cString: strerror(errno)))
+    }
+
     /// Sterowanie usługami launchd. Akcja musi być z listy, a etykieta i domena są sprawdzane,
     /// żeby przez pomocnika nie dało się uruchomić dowolnego polecenia.
     func service(action: String, domain: String, label: String, reply: @escaping (String) -> Void) {
         guard let act = ServiceAction(rawValue: action) else { reply("Nieznana operacja"); return }
-        let domainOK = domain == "system" || domain.hasPrefix("user/") || domain.hasPrefix("gui/")
-        let labelOK = !label.isEmpty && label.count < 256 && label.allSatisfy {
-            $0.isLetter || $0.isNumber || $0 == "." || $0 == "-" || $0 == "_"
+        guard let caller = NSXPCConnection.current(),
+              ServicePolicy.allows(domain: domain, label: label, callerUID: caller.effectiveUserIdentifier)
+        else { reply("Niedozwolona domena lub etykieta"); return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = CommandRunner.run("/bin/launchctl", act.arguments(domain: domain, label: label), timeout: 6)
+            reply(result.failureDescription ?? "")
         }
-        guard domainOK, labelOK else { reply("Niedozwolona domena lub etykieta"); return }
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        p.arguments = act.arguments(domain: domain, label: label)
-        let pipe = Pipe()
-        p.standardOutput = pipe
-        p.standardError = pipe
-        do { try p.run() } catch { reply("Nie udało się uruchomić launchctl: \(error.localizedDescription)"); return }
-        p.waitUntilExit()
-        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        reply(p.terminationStatus == 0 ? "" : (out.isEmpty ? "launchctl zakończył się kodem \(p.terminationStatus)" : out))
     }
 }
 
@@ -168,8 +181,13 @@ final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
+guard let requirement = PeerTrust.requirement(identifier: PeerTrust.appIdentifier) else {
+    NSLog("VitalsHelper: refusing to start without a trusted signing team")
+    exit(EXIT_FAILURE)
+}
 let delegate = ListenerDelegate()
 let listener = NSXPCListener(machServiceName: helperMachService)
+listener.setConnectionCodeSigningRequirement(requirement)
 listener.delegate = delegate
 listener.resume()
 RunLoop.main.run()

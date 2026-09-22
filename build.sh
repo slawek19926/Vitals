@@ -48,13 +48,8 @@ public enum AppVersion {
 EOV
 sed -e "s/@TEAMID@/$TEAMID/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" -e "s/@BUILD@/$BUILD/g" Resources/Helper-Info.plist.in > Resources/gen/Helper-Info.plist
 sed -e "s/@TEAMID@/$TEAMID/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" -e "s/@BUILD@/$BUILD/g" Resources/Info.plist.in > Resources/gen/Info.plist
-if ! swift build -c "$CONFIG" 2>&1 | grep -vE '^\[|warning: unsafeFlags'; then :; fi
-# błąd kompilacji musi przerwać pakowanie, inaczej powstaje paczka ze starą binarką
-if ! swift build -c "$CONFIG" >/dev/null 2>&1; then
-    echo "BŁĄD: kompilacja nie powiodła się – pakiet nie został zbudowany." >&2
-    swift build -c "$CONFIG" 2>&1 | grep -E "error:" | head -20 >&2
-    exit 1
-fi
+# Fail once, with the original compiler diagnostics; never package a stale executable.
+swift build -c "$CONFIG"
 BIN=$(swift build -c "$CONFIG" --show-bin-path)
 APP="build/Vitals.app"
 rm -rf "$APP"
@@ -70,8 +65,8 @@ cp Resources/gen/Info.plist "$APP/Contents/Info.plist"
 # Podpis: ustaw CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" aby pomocnik w tle (SMAppService) mógł być zatwierdzony.
 # Bez certyfikatu pakiet dostaje podpis ad-hoc (aplikacja działa, ale macOS odrzuci rejestrację LaunchDaemon).
 ID="${CODESIGN_IDENTITY:--}"
-codesign --force --sign "$ID" --identifier online.equishow.vitals.helper "$APP/Contents/MacOS/VitalsHelper" >/dev/null 2>&1 || true
-codesign --force --sign "$ID" --identifier online.equishow.vitals.helper "$APP/Contents/Library/LaunchServices/online.equishow.vitals.helper" >/dev/null 2>&1 || true
-codesign --force --sign "$ID" --identifier online.equishow.vitals "$APP" >/dev/null 2>&1 || true
+codesign --force --options runtime --sign "$ID" --identifier online.equishow.vitals.helper "$APP/Contents/MacOS/VitalsHelper"
+codesign --force --options runtime --sign "$ID" --identifier online.equishow.vitals.helper "$APP/Contents/Library/LaunchServices/online.equishow.vitals.helper"
+codesign --force --options runtime --sign "$ID" --identifier online.equishow.vitals "$APP"
 [ "$ID" = "-" ] && echo "Podpis ad-hoc (brak CODESIGN_IDENTITY) – pomocnik w tle wymaga certyfikatu Apple Development." || echo "Podpisano: $ID"
 echo "Gotowe: $APP ($FULL_VERSION)"

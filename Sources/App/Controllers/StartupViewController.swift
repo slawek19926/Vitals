@@ -203,14 +203,21 @@ final class StartupViewController: NSViewController, NSTableViewDataSource, NSTa
         let uid = getuid()
         let enable = sender.state == .on
         DispatchQueue.global().async { [weak self] in
-            if enable {
-                _ = Shell.run("/bin/launchctl", ["enable", "gui/\(uid)/\(it.label)"])
-                _ = Shell.run("/bin/launchctl", ["bootstrap", "gui/\(uid)", it.path])
-            } else {
-                _ = Shell.run("/bin/launchctl", ["bootout", "gui/\(uid)/\(it.label)"])
-                _ = Shell.run("/bin/launchctl", ["disable", "gui/\(uid)/\(it.label)"])
+            let commands = enable
+                ? [["enable", "gui/\(uid)/\(it.label)"], ["bootstrap", "gui/\(uid)", it.path]]
+                : [["bootout", "gui/\(uid)/\(it.label)"], ["disable", "gui/\(uid)/\(it.label)"]]
+            var failure: String?
+            for arguments in commands {
+                let result = Shell.execute("/bin/launchctl", arguments)
+                if let error = result.failureDescription { failure = error; break }
             }
-            DispatchQueue.main.async { self?.lastLoad = .distantPast; self?.reload() }
+            DispatchQueue.main.async {
+                if let failure {
+                    let alert = NSAlert(); alert.messageText = L("Nie udało się wykonać operacji")
+                    alert.informativeText = failure; alert.runModal()
+                }
+                self?.lastLoad = .distantPast; self?.reload()
+            }
         }
     }
 

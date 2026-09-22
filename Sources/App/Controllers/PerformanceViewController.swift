@@ -630,11 +630,10 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         for (i, d) in disks.enumerated() {
             guard let page = diskPages[keys[i]] else { continue }
             let cell = cells[page.index], detail = details[page.index]
-            let total = d.readRate + d.writeRate
-            cell.graph.push([d.readRate, d.writeRate])
+            if fresh { cell.graph.push([d.readRate, d.writeRate]) }
             cell.line1.update((d.name.isEmpty ? d.bsd : d.name) + " · " + d.category, flash: false)
             cell.line2.update("R \(Fmt.rate(d.readRate))  W \(Fmt.rate(d.writeRate))", flash: false)
-            page.graph.push([d.readRate, d.writeRate])
+            if fresh { page.graph.push([d.readRate, d.writeRate]) }
             guard detail.superview != nil else { continue }
             detail.subtitle.stringValue = "\(d.bsd) · \(d.kind) · \(Fmt.bytes(d.size, precision: 0))"
             // pasek pokazuje bieżący transfer w skali do największego, jaki ten dysk osiągnął w tej sesji
@@ -745,8 +744,8 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
             guard let page = ifacePages[itf.name] else { continue }
             let cell = cells[page.index], detail = details[page.index]
             let kind = NetInfo.kind(for: itf.name)
-            cell.graph.push([itf.rxRate, itf.txRate])
-            page.graph.push([itf.rxRate, itf.txRate])
+            if fresh { cell.graph.push([itf.rxRate, itf.txRate]) }
+            if fresh { page.graph.push([itf.rxRate, itf.txRate]) }
             cell.line1.update("\(itf.name) · \(kind.type)", flash: false)
             cell.line2.update("↓ \(Fmt.rate(itf.rxRate))  ↑ \(Fmt.rate(itf.txRate))", flash: false)
             guard detail.superview != nil else { continue }

@@ -25,16 +25,24 @@ enum HistoryExport {
     static func line(_ s: HistorySample, _ fmt: Format = .current) -> String {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        func n(_ v: Double, _ p: Int = 2) -> String {
-            let t = String(format: "%.\(p)f", v)
+        func n(_ v: Double?, _ p: Int = 2) -> String {
+            guard let v, v.isFinite else { return "" }
+            let t = String(format: "%.\(p)f", locale: Locale(identifier: "en_US_POSIX"), v)
             return fmt.decimalComma ? t.replacingOccurrences(of: ".", with: ",") : t
         }
         let top = s.top.max { $0.cpu < $1.cpu }
         return [f.string(from: s.time), n(s.cpuTotal), n(s.cpuUser), n(s.cpuSystem), "\(s.memUsed)", "\(s.memSwap)",
                 n(s.diskRead, 0), n(s.diskWrite, 0), n(s.netRx, 0), n(s.netTx, 0), n(s.sysWatts), n(s.cpuWatts),
-                n(s.gpuUtil, 1), n(s.hotspotC, 1), "\(s.batteryPercent)", "\(s.processCount)", "\(s.threads)",
-                (top?.name ?? "").replacingOccurrences(of: fmt.separator, with: " "), n(top?.cpu ?? 0, 1)]
+                n(s.gpuUtil, 1), n(s.hotspotC, 1), s.batteryPercent.map(String.init) ?? "", "\(s.processCount)", "\(s.threads)",
+                escapeCell(top?.name ?? "", separator: fmt.separator), n(top?.cpu ?? 0, 1)]
             .joined(separator: fmt.separator)
+    }
+
+    static func escapeCell(_ value: String, separator: String) -> String {
+        if value.contains(separator) || value.contains("\"") || value.contains("\n") || value.contains("\r") {
+            return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        }
+        return value
     }
 
     /// Zapisuje całą historię trzymaną w pamięci
@@ -50,19 +58,21 @@ enum HistoryExport {
         private var handle: FileHandle?
         private(set) var url: URL?
         private var count = 0
+        private(set) var lastError: String?
         /// format ustalony przy starcie zapisu – zmiana języka w trakcie nie psuje pliku
         private var fmt = Format.current
         var isRecording: Bool { handle != nil }
 
-        func startRecording(to url: URL) {
+        func startRecording(to url: URL) throws {
             stopRecording()
             fmt = Format.current
-            FileManager.default.createFile(atPath: url.path, contents: (fmt.header + "\n").data(using: .utf8))
-            guard let h = FileHandle(forWritingAtPath: url.path) else { return }
-            h.seekToEndOfFile()
+            try Data((fmt.header + "\n").utf8).write(to: url, options: .atomic)
+            let h = try FileHandle(forWritingTo: url)
+            try h.seekToEnd()
             handle = h
             self.url = url
             count = 0
+            lastError = nil
         }
 
         @discardableResult
@@ -77,10 +87,18 @@ enum HistoryExport {
 
         func record(_ s: HistorySample) {
             guard let h = handle, let data = (HistoryExport.line(s, fmt) + "\n").data(using: .utf8) else { return }
-            h.write(data)
-            count += 1
+            do {
+                try h.write(contentsOf: data)
+                count += 1
+            } catch {
+                lastError = error.localizedDescription
+                stopRecording()
+                NotificationCenter.default.post(name: .recordingFailed, object: lastError)
+            }
         }
 
         var sampleCount: Int { count }
     }
 }
+
+extension Notification.Name { static let recordingFailed = Notification.Name("RecordingFailed") }

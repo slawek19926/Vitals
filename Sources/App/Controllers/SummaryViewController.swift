@@ -62,7 +62,7 @@ final class SummaryViewController: NSViewController, NSTableViewDataSource, NSTa
     private let meterTemp = MeterView(title: "TEMP CPU", accent: .thermal)
 
     // przegląd CPU
-    private let cpuHeader = DisplayHeader("CPU OVERVIEW", accent: .cpu)
+    private let cpuHeader = DisplayHeader(L("Obciążenie CPU"), accent: .cpu)
     private let cpuGraph = GraphView(series: 2, history: 120, accents: [.cpu, .cpu])
     private let legendUtil = Label.make(L("Wykorzystanie"), size: 11)
     private let legendKernel = Label.make(L("Jądro (system)"), size: 11)

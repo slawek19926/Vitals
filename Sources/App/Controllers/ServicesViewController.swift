@@ -214,11 +214,11 @@ final class ServicesViewController: NSViewController, NSTableViewDataSource, NST
 
         let domain = launchctlDomain(svc)
         let label = svc.label
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let error: String?
             if Monitor.isRoot {
-                let out = Shell.run("/bin/launchctl", action.arguments(domain: domain, label: label), timeout: 10)
-                error = out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : out
+                let result = Shell.execute("/bin/launchctl", action.arguments(domain: domain, label: label), timeout: 10)
+                error = result.failureDescription
             } else {
                 error = HelperClient.shared.serviceAction(action, domain: domain, label: label)
             }

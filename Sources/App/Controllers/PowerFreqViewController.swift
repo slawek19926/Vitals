@@ -362,7 +362,7 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         }
         for r in root { refresh(r) }
         let tempCount = s.temps.count, pk = s.powerKeys.count, vk = s.voltageKeys.count, ik = s.currentKeys.count
-        let src = s.freq?.source == "powermetrics" ? "powermetrics (pomocnik)" : (s.power.available ? "IOReport" : "niedostępne bez pomocnika")
+        let src = s.powerStale ? L("Dane nieaktualne") : (s.powerSource.isEmpty ? L("Brak danych") : s.powerSource)
         summary.stringValue = "\(tempCount) " + L("czujników temperatury") + " · \(pk) " + L("mocy") + " · \(vk) " + L("napięć") + " · \(ik) " + L("prądów") + " (AppleSMC) · " + L("moc i taktowania") + ": \(src)"
     }
 

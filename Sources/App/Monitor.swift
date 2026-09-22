@@ -18,6 +18,7 @@ struct ProcInfo {
     let threads: Int
     let cpuTimeNs: UInt64
     let startTime: Date?
+    let startTimeMicros: Int64?
     let accessible: Bool
     /// Łączne bajty we/wy procesu i tempo policzone względem poprzedniego pomiaru
     var diskRead: UInt64 = 0
@@ -38,6 +39,7 @@ struct ProcInfo {
         pid = h.pid; ppid = h.ppid; uid = h.uid; name = h.name; user = h.user; state = h.state; path = h.path
         cpuPercent = h.cpuPercent; memBytes = h.memBytes; threads = h.threads; cpuTimeNs = h.cpuTimeNs
         startTime = h.startTime > 0 ? Date(timeIntervalSince1970: TimeInterval(h.startTime)) : nil
+        startTimeMicros = h.startTimeMicros
         accessible = h.accessible
         diskRead = h.diskRead; diskWrite = h.diskWrite; contextSwitches = h.contextSwitches
     }
@@ -47,6 +49,7 @@ struct ProcInfo {
         name = cString(p.name); user = cString(p.user); state = cString(p.state); path = cString(p.path)
         cpuPercent = p.cpuPercent; memBytes = p.memBytes; threads = Int(p.threads); cpuTimeNs = p.cpuTimeNs
         startTime = p.startTime > 0 ? Date(timeIntervalSince1970: TimeInterval(p.startTime)) : nil
+        startTimeMicros = p.startTimeMicros > 0 ? p.startTimeMicros : nil
         accessible = p.accessible
         diskRead = p.diskRead; diskWrite = p.diskWrite; contextSwitches = p.contextSwitches
     }
@@ -175,11 +178,11 @@ struct HistorySample {
     var diskWrite: Double = 0
     var netRx: Double = 0
     var netTx: Double = 0
-    var sysWatts: Double = 0
-    var cpuWatts: Double = 0
-    var gpuUtil: Double = 0
-    var hotspotC: Double = 0
-    var batteryPercent: Int = 0
+    var sysWatts: Double? = nil
+    var cpuWatts: Double? = nil
+    var gpuUtil: Double? = nil
+    var hotspotC: Double? = nil
+    var batteryPercent: Int? = nil
     var threads: Int = 0
 }
 
@@ -211,12 +214,10 @@ struct DiskDevice {
 
     /// Ikona pasująca do rodzaju nośnika
     var icon: String {
-        switch category {
-        case "Dysk wewnętrzny": return "internaldrive"
-        case "Pendrive": return "mediastick"
-        case "Karta pamięci": return "sdcard"
-        default: return "externaldrive"
-        }
+        if isInternal { return "internaldrive" }
+        let bus = interconnect.lowercased()
+        if bus.contains("secure digital") || bus.contains("card") { return "sdcard" }
+        return removable && medium != "SSD" ? "mediastick" : "externaldrive"
     }
 
     /// Opis w stylu „Dysk wewnętrzny · SSD · NVMe · Apple Fabric”
@@ -229,6 +230,8 @@ struct DiskDevice {
 struct Snapshot {
     var cpu = CpuStats()
     var power = SCPower()
+    var powerStale = false
+    var powerSource = ""
     var freq: HelperPower? = nil          // taktowania i moc z powermetrics (pomocnik)
     var dcInWatts: Double? = nil
     var temps: [Sensor] = []
@@ -298,20 +301,21 @@ final class Monitor {
     private(set) var history: [HistorySample] = []
     /// Ile próbek trzymamy (z zapasem na najdłuższy wykres)
     /// Ile widocznych stron potrzebuje pełnych odczytów czujników
-    private(set) var sensorsInUse = 0
-    func retainSensors() { sensorsInUse += 1 }
-    func releaseSensors() { sensorsInUse = max(0, sensorsInUse - 1) }
+    private let sensorUsers = Locked(0)
+    var sensorsInUse: Int { sensorUsers.withValue { $0 } }
+    func retainSensors() { sensorUsers.withValue { $0 += 1 } }
+    func releaseSensors() { sensorUsers.withValue { $0 = max(0, $0 - 1) } }
 
     /// Poprzednie liczniki we/wy procesów, żeby pokazać tempo zamiast sumy od startu
-    private var prevProcIO: [Int: (r: UInt64, w: UInt64, csw: UInt64)] = [:]
+    private var prevProcIO: [Int: (r: UInt64, w: UInt64, csw: UInt64, start: Int64?)] = [:]
 
     private func applyDiskRates(_ dt: Double) {
-        var next: [Int: (r: UInt64, w: UInt64, csw: UInt64)] = [:]
+        var next: [Int: (r: UInt64, w: UInt64, csw: UInt64, start: Int64?)] = [:]
         next.reserveCapacity(lastProcesses.count)
         for i in lastProcesses.indices {
             let p = lastProcesses[i]
-            next[p.pid] = (p.diskRead, p.diskWrite, p.contextSwitches)
-            guard let old = prevProcIO[p.pid] else { continue }
+            next[p.pid] = (p.diskRead, p.diskWrite, p.contextSwitches, p.startTimeMicros)
+            guard let old = prevProcIO[p.pid], old.start == p.startTimeMicros else { continue }
             lastProcesses[i].diskReadRate = p.diskRead >= old.r ? Double(p.diskRead - old.r) / dt : 0
             lastProcesses[i].diskWriteRate = p.diskWrite >= old.w ? Double(p.diskWrite - old.w) / dt : 0
             lastProcesses[i].cswRate = p.contextSwitches >= old.csw ? Double(p.contextSwitches - old.csw) / dt : 0
@@ -356,7 +360,7 @@ final class Monitor {
 
     /// Interfejsy sieciowe z policzonym tempem transferu (getifaddrs jest tani, ale nie ma po co wołać go 4x/s)
     private func sampleInterfaces(_ now: Date) -> [NetInterface] {
-        guard now.timeIntervalSince(lastIfacesAt) >= 0.05 || lastIfaces.isEmpty else { return lastIfaces }
+        guard now.timeIntervalSince(lastIfacesAt) >= 0.5 else { return lastIfaces }
         let dt = max(0.1, now.timeIntervalSince(lastIfacesAt))
         let first = lastIfaces.isEmpty
         lastIfacesAt = now
@@ -378,7 +382,7 @@ final class Monitor {
 
     /// Lista dysków fizycznych z policzonym transferem (IOKit jest kosztowny, więc co ~2 s)
     private func sampleDisks(_ now: Date) -> [DiskDevice] {
-        guard now.timeIntervalSince(lastDisksAt) >= 0.05 || lastDisks.isEmpty else { return lastDisks }
+        guard now.timeIntervalSince(lastDisksAt) >= 2.0 else { return lastDisks }
         disksGeneration += 1
         let dt = max(0.1, now.timeIntervalSince(lastDisksAt))
         let first = lastDisks.isEmpty
@@ -408,7 +412,8 @@ final class Monitor {
         return out
     }
 
-    private let historyLimit = 1500
+    private let historyLimit = 6000
+    private let historyDuration: TimeInterval = 600
     /// Ile procesów zapamiętujemy w każdej próbce
     private let historyTopCount = 30
     private(set) var memoryDescription = ""   // np. "LPDDR5 · Hynix" (system_profiler)
@@ -431,13 +436,14 @@ final class Monitor {
     private var lastTempAt = Date.distantPast
     private var lastKeysAt = Date.distantPast
     private var lastPowerAt = Date.distantPast
-    private(set) var helperActive = false
-    private var lastHelperPower: SCPower?
-    private var lastGoodPower: SCPower?
-    private var lastGoodPowerAt = Date.distantPast
+    private let helperState = Locked(false)
+    private(set) var helperActive: Bool {
+        get { helperState.withValue { $0 } }
+        set { helperState.withValue { $0 = newValue } }
+    }
+    private var powerReadings = PowerReadings()
     private var lastSMCPower = SCPower()
     private var lastDCWatts: Double?
-    private var lastHelperFreq: HelperPower?
 
     var interval: TimeInterval = UserDefaults.standard.double(forKey: "refresh") > 0 ? UserDefaults.standard.double(forKey: "refresh") : 0.1 {
         didSet {
@@ -522,18 +528,12 @@ final class Monitor {
                 keys = (self.readKeys("P"), self.readKeys("V"), self.readKeys("I"), self.readKeys("F"))
             }
             self.queue.async {
-                if let power { self.lastSMCPower = power }
-                self.lastDCWatts = needPower ? dc : self.lastDCWatts
-                if let hp = helperPower {
-                    var pw = SCPower()
-                    pw.sysWatts = self.lastSMCPower.sysWatts
-                    pw.cpuWatts = hp.cpuWatts; pw.gpuWatts = hp.gpuWatts; pw.aneWatts = hp.aneWatts; pw.dramWatts = hp.dramWatts
-                    pw.available = hp.available
-                    self.lastHelperPower = pw
-                    var hf = hp
-                    if hf.gpuFreqMHz > 0, hf.gpuFreqMHz < 1 { hf.gpuFreqMHz *= 1e6 }
-                    self.lastHelperFreq = hf
+                if let power {
+                    self.lastSMCPower = power
+                    self.powerReadings.acceptLocal(power, at: now)
                 }
+                self.lastDCWatts = needPower ? dc : self.lastDCWatts
+                self.powerReadings.acceptHelper(helperPower, receivedAt: now)
                 if let temps { self.lastTemps = temps }
                 if let keys { self.lastPower = keys.p; self.lastVolt = keys.v; self.lastCurr = keys.i; self.lastFan = keys.f }
                 self.auxBusy = false
@@ -557,7 +557,7 @@ final class Monitor {
         s.gpu = sc_gpu_stats()
         let b = Battery(sc_read_battery())
         s.battery = b.present ? b : nil
-        // lista procesów co ~2 s
+        // lista procesów co ~0,5 s
         let now = Date()
         if now.timeIntervalSince(lastProcAt) >= 0.5 || lastProcesses.isEmpty {
             let procDt = max(0.05, now.timeIntervalSince(lastProcAt))
@@ -595,27 +595,11 @@ final class Monitor {
         s.loadAvg = la
         s.uptime = sc_uptime_seconds()
         s.thermalState = Foundation.ProcessInfo.processInfo.thermalState
-        s.power = lastSMCPower
-        if helperActive, let pw = lastHelperPower {
-            // pomocnik podaje CPU/GPU/ANE/DRAM z powermetrics, ale silnik wideo i ISP mamy tylko z IOReport
-            let io = s.power
-            s.power = pw
-            s.power.sysWatts = io.sysWatts
-            s.power.encoderWatts = io.encoderWatts
-            s.power.decoderWatts = io.decoderWatts
-            s.power.ispWatts = io.ispWatts
-            s.power.displayWatts = io.displayWatts
-            s.freq = lastHelperFreq
-        }
-        // powermetrics bywa chwilowo bez próbki; zamiast migać kreską trzymamy ostatni dobry odczyt
-        if s.power.available {
-            lastGoodPower = s.power
-            lastGoodPowerAt = now
-        } else if let g = lastGoodPower, now.timeIntervalSince(lastGoodPowerAt) < 6 {
-            let sys = s.power.sysWatts
-            s.power = g
-            if sys > 0 { s.power.sysWatts = sys }
-        }
+        let reading = powerReadings.snapshot(at: now, helperEnabled: helperActive)
+        s.power = reading.power
+        s.freq = reading.frequency
+        s.powerStale = reading.stale
+        s.powerSource = reading.source
         s.dcInWatts = lastDCWatts
         scheduleAux(now)
         s.rates = computeRates(s.mem, now)
@@ -662,15 +646,18 @@ final class Monitor {
         sample.diskWrite = s.disk.writeRate
         sample.netRx = s.net.rxRate
         sample.netTx = s.net.txRate
-        sample.sysWatts = s.sysWatts ?? 0
-        sample.cpuWatts = s.power.available ? s.power.cpuWatts : 0
-        sample.gpuUtil = s.gpuUtil ?? 0
-        sample.hotspotC = s.hotspot ?? 0
-        sample.batteryPercent = s.battery?.percent ?? 0
+        sample.sysWatts = s.sysWatts
+        sample.cpuWatts = s.power.available ? s.power.cpuWatts : nil
+        sample.gpuUtil = s.gpuUtil
+        sample.hotspotC = s.hotspot
+        sample.batteryPercent = s.battery?.percent
         sample.threads = s.totalThreads
         history.append(sample)
         HistoryExport.shared.record(sample)
-        if history.count > historyLimit { history.removeFirst(history.count - historyLimit) }
+        let cutoff = s.timestamp.addingTimeInterval(-historyDuration)
+        let expired = history.prefix { $0.time < cutoff }.count
+        let excess = max(expired, history.count - historyLimit)
+        if excess > 0 { history.removeFirst(excess) }
     }
 
     static func volumes() -> [Volume] {
