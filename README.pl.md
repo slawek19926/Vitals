@@ -125,6 +125,8 @@ Testy regresyjne uruchomisz poleceniem `swift test` — także w czystej kopii r
 
 `open Package.swift` otwiera projekt w Xcode (schemat `Vitals`). Punkty przerwania działają zarówno w Swifcie, jak i w C++ w `Sources/SysCore`.
 
+Aby spakować zbudowaną i podpisaną aplikację do obrazu instalacyjnego, uruchom `CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" ./dmg.sh`. Skrypt tworzy `build/Vitals-<wersja>.dmg` i sumę SHA-256, sprawdza aplikację wewnątrz zamontowanego obrazu i nie zmienia numeru wersji. DMG zawiera `Vitals.app` i skrót do `/Applications` — instalacja polega na przeciągnięciu aplikacji do tego folderu. Przy publikacji wydania zachowaj załącznik ZIP: korzysta z niego aktualizator w aplikacji.
+
 ## Jak to działa
 
 ```

@@ -125,6 +125,8 @@ Run regression tests with `swift test`, including from a clean checkout without 
 
 `open Package.swift` opens the project in Xcode (scheme `Vitals`). Breakpoints work both in Swift and in the C++ under `Sources/SysCore`.
 
+To package an already built, signed app as a drag-and-drop installer, run `CODESIGN_IDENTITY="Apple Development: Jane Doe (TEAMID)" ./dmg.sh`. It creates `build/Vitals-<version>.dmg` and a SHA-256 checksum, verifies the app inside the mounted image, and leaves the app version unchanged. The DMG contains `Vitals.app` and a shortcut to `/Applications`. Keep the ZIP asset when publishing releases: the in-app updater uses ZIP archives.
+
 ## How it works
 
 ```

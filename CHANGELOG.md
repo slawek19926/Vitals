@@ -32,7 +32,8 @@ This release adds automatic helper updates, faster access to Vitals, and reliabi
 - The package is signed with an Apple Development certificate; it is not notarized. macOS may display its usual security prompt.
 - All 37 local regression tests passed, and the release bundle's signature was verified. Full helper replacement with system authorization and an end-to-end update of an installed app have not been verified for this release.
 
-### Polski
+<details>
+<summary>Polski — rozwiń changelog</summary>
 
 To wydanie dodaje automatyczną aktualizację pomocnika, szybszy dostęp do Vitals oraz poprawki niezawodności pomiarów, akcji procesów i aktualizacji aplikacji. Poniższa lista obejmuje zmiany od wersji 1.1.0.137.
 
@@ -61,3 +62,5 @@ To wydanie dodaje automatyczną aktualizację pomocnika, szybszy dostęp do Vita
 - Aktualizacja zainstalowanego pomocnika może wymagać hasła administratora macOS lub zatwierdzenia w Elementach logowania. Po anulowaniu ponów próbę w **Ustawienia → Pomocnik i uprawnienia → Zaktualizuj pomocnika…**.
 - Pakiet jest podpisany certyfikatem Apple Development; nie jest notaryzowany. macOS może wyświetlić standardowy komunikat bezpieczeństwa.
 - Wszystkie 37 lokalnych testów regresyjnych przeszło, a podpis pakietu wydania został zweryfikowany. Pełna wymiana pomocnika z autoryzacją systemową oraz aktualizacja zainstalowanej aplikacji od początku do końca nie zostały zweryfikowane dla tego wydania.
+
+</details>
