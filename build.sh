@@ -51,6 +51,7 @@ sed -e "s/@TEAMID@/$TEAMID/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" -e "s/@BUI
 # Fail once, with the original compiler diagnostics; never package a stale executable.
 swift build -c "$CONFIG"
 BIN=$(swift build -c "$CONFIG" --show-bin-path)
+"$BIN/LocalizationTool" validate --catalog Sources/App/Localization
 APP="build/Vitals.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -62,7 +63,8 @@ cp Resources/online.equishow.vitals.helper.plist "$APP/Contents/Library/LaunchDa
 cp "$BIN/VitalsHelper" "$APP/Contents/Library/LaunchServices/online.equishow.vitals.helper"
 cp Resources/gen/Info.plist "$APP/Contents/Info.plist"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
-cp -R Resources/*.lproj "$APP/Contents/Resources/"
+cp -R "$BIN/Vitals_Vitals.bundle" "$APP/Contents/Resources/"
+"$BIN/LocalizationTool" package --catalog Sources/App/Localization --app "$APP"
 # Podpis: ustaw CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" aby pomocnik w tle (SMAppService) mógł być zatwierdzony.
 # Bez certyfikatu pakiet dostaje podpis ad-hoc (aplikacja działa, ale macOS odrzuci rejestrację LaunchDaemon).
 ID="${CODESIGN_IDENTITY:--}"

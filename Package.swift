@@ -24,6 +24,8 @@ let package = Package(
         ),
         // Wspólny protokół XPC aplikacja ↔ pomocnik
         .target(name: "HelperKit", path: "Sources/HelperKit"),
+        .target(name: "LocalizationKit", path: "Sources/LocalizationKit"),
+        .executableTarget(name: "LocalizationTool", dependencies: ["LocalizationKit"], path: "Sources/LocalizationTool"),
         // Pomocnik uprzywilejowany (LaunchDaemon rejestrowany przez SMAppService)
         .executableTarget(
             name: "VitalsHelper",
@@ -39,8 +41,9 @@ let package = Package(
         // Aplikacja AppKit
         .executableTarget(
             name: "Vitals",
-            dependencies: ["SysCore", "HelperKit"],
+            dependencies: ["SysCore", "HelperKit", "LocalizationKit"],
             path: "Sources/App",
+            resources: [.copy("Localization")],
             swiftSettings: [.unsafeFlags(["-parse-as-library"])],
             linkerSettings: [
                 .linkedFramework("AppKit"),
@@ -51,7 +54,7 @@ let package = Package(
                 .linkedFramework("CoreMedia"),
             ]
         ),
-        .testTarget(name: "VitalsTests", dependencies: ["Vitals", "HelperKit", "SysCore"], path: "Tests/VitalsTests"),
+        .testTarget(name: "VitalsTests", dependencies: ["Vitals", "HelperKit", "SysCore", "LocalizationKit"], path: "Tests/VitalsTests"),
     ],
     swiftLanguageVersions: [.v5],
     cxxLanguageStandard: .cxx17

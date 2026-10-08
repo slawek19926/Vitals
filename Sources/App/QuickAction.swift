@@ -2,8 +2,9 @@
 import AppKit
 
 enum QuickAction {
+    private static let workflowIdentifier = "online.equishow.vitals.quickaction"
     /// Nazwa widoczna w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi
-    static var title: String { L("Pokaż Vitals") }
+    static var title: String { L("action.show_vitals") }
 
     private static var servicesURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -15,14 +16,40 @@ enum QuickAction {
     static func installedURLs(in services: URL) -> [URL] {
         // Keep historical names even if a translation changes in a later release.
         var names = ["Pokaż Vitals", "Show Vitals", "显示 Vitals"]
-        for language in [AppLanguage.polish, .english, .simplifiedChinese] {
-            let name = L10n.t("Pokaż Vitals", language: language)
+        for language in L10n.catalog.configuration.languages {
+            let name = L10n.catalog.text("action.show_vitals", languageCode: language.code)
             if !names.contains(name) { names.append(name) }
         }
-        return names.compactMap { name in
+        var installed: [URL] = []
+        var seen = Set<String>()
+        for name in names {
             let candidate = services.appendingPathComponent("\(name).workflow", isDirectory: true)
-            return FileManager.default.fileExists(atPath: candidate.path) ? candidate : nil
+            if FileManager.default.fileExists(atPath: candidate.path),
+               seen.insert(workflowIdentity(candidate)).inserted { installed.append(candidate) }
         }
+        // New workflows carry a language-independent identity, so later wording changes
+        // or disabled languages cannot leave extra installed copies behind.
+        let candidates = (try? FileManager.default.contentsOfDirectory(at: services, includingPropertiesForKeys: nil)) ?? []
+        for entry in candidates.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+        where entry.pathExtension == "workflow" {
+            let candidate = services.appendingPathComponent(entry.lastPathComponent, isDirectory: true)
+            let identity = workflowIdentity(candidate)
+            guard !seen.contains(identity) else { continue }
+            guard let data = try? Data(contentsOf: candidate.appendingPathComponent("Contents/Info.plist")),
+                  let info = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any],
+                  info["VitalsQuickActionIdentifier"] as? String == workflowIdentifier else { continue }
+            installed.append(candidate); seen.insert(identity)
+        }
+        return installed
+    }
+
+    private static func workflowIdentity(_ url: URL) -> String {
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let device = attributes[.systemNumber] as? NSNumber,
+           let inode = attributes[.systemFileNumber] as? NSNumber {
+            return "\(device.uint64Value):\(inode.uint64Value)"
+        }
+        return url.resolvingSymlinksInPath().standardizedFileURL.path
     }
 
     static var isInstalled: Bool { isInstalled(in: servicesURL) }
@@ -41,7 +68,7 @@ enum QuickAction {
     /// Filesystem-only operations allow migration tests without touching real services.
     static func install(in services: URL, language: AppLanguage) throws {
         let fm = FileManager.default
-        let title = L10n.t("Pokaż Vitals", language: language)
+        let title = L10n.t("action.show_vitals", language: language)
         let destination = services.appendingPathComponent("\(title).workflow", isDirectory: true)
         let contents = destination.appendingPathComponent("Contents", isDirectory: true)
         try remove(in: services)
@@ -81,6 +108,7 @@ enum QuickAction {
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
+        \t<key>VitalsQuickActionIdentifier</key><string>\(workflowIdentifier)</string>
         \t<key>NSServices</key>
         \t<array>
         \t\t<dict>

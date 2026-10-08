@@ -85,6 +85,21 @@ final class QuickActionTests: XCTestCase {
         }
     }
 
+    func testWorkflowIdentitySurvivesTranslationRenames() throws {
+        try withServices { services in
+            try QuickAction.install(in: services, language: .english)
+            let installed = try XCTUnwrap(QuickAction.installedURLs(in: services).first)
+            let renamed = services.appendingPathComponent("Previous translation.workflow", isDirectory: true)
+            try FileManager.default.moveItem(at: installed, to: renamed)
+            XCTAssertEqual(QuickAction.installedURLs(in: services), [renamed])
+            XCTAssertTrue(QuickAction.isInstalled(in: services))
+            try QuickAction.install(in: services, language: .simplifiedChinese)
+            let current = services.appendingPathComponent(L10n.t("action.show_vitals", language: .simplifiedChinese) + ".workflow", isDirectory: true)
+            XCTAssertEqual(QuickAction.installedURLs(in: services), [current])
+            XCTAssertFalse(FileManager.default.fileExists(atPath: renamed.path))
+        }
+    }
+
     func testRemovalDeletesAllKnownVariantsAndPreservesUnrelatedWorkflows() throws {
         try withServices { services in
             _ = try createLegacyVariants(in: services)

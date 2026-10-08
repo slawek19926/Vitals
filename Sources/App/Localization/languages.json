@@ -1,0 +1,45 @@
+{
+  "developmentLanguage": "en",
+  "languages": [
+    {
+      "code": "pl",
+      "csvSeparator": ";",
+      "decimalComma": true,
+      "enabled": true,
+      "id": 1,
+      "matches": [
+        "pl"
+      ],
+      "nativeName": "Polski",
+      "pluralRule": "polish",
+      "prefersSystemFont": false
+    },
+    {
+      "code": "en",
+      "csvSeparator": ",",
+      "decimalComma": false,
+      "enabled": true,
+      "id": 2,
+      "matches": [
+        "en"
+      ],
+      "nativeName": "English",
+      "pluralRule": "oneOther",
+      "prefersSystemFont": false
+    },
+    {
+      "code": "zh-Hans",
+      "csvSeparator": ",",
+      "decimalComma": false,
+      "enabled": true,
+      "id": 3,
+      "matches": [
+        "zh-Hans"
+      ],
+      "nativeName": "简体中文",
+      "pluralRule": "oneOther",
+      "prefersSystemFont": true
+    }
+  ],
+  "schemaVersion": 1
+}

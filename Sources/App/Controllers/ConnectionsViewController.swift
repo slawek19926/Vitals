@@ -45,7 +45,7 @@ enum ConnectionPresentation {
     static func quantity(_ count: Int, one: String, few: String, many: String) -> String {
         let form: String
         if count == 1 { form = one }
-        else if L10n.resolvedLanguage == .polish && (2...4).contains(count % 10) && !(12...14).contains(count % 100) { form = few }
+        else if L10n.resolvedLanguage.pluralRule == .polish && (2...4).contains(count % 10) && !(12...14).contains(count % 100) { form = few }
         else { form = many }
         return "\(count) \(L(form))"
     }

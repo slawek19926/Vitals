@@ -1,2 +1,0 @@
-"NSLocationWhenInUseUsageDescription" = "macOS wymaga zgody na dostęp do lokalizacji, aby aplikacja mogła pokazać nazwę sieci Wi-Fi (SSID). Położenie nie jest nigdzie wysyłane ani zapisywane.";
-"NSBluetoothAlwaysUsageDescription" = "Vitals skanuje pobliskie urządzenia Bluetooth Low Energy tylko po wybraniu opcji „Skanuj w pobliżu”, aby pokazać ich nazwy i siłę sygnału. Wyniki pozostają na tym Macu.";

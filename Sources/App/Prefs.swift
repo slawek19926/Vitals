@@ -67,7 +67,7 @@ final class Prefs {
     var pixelsPerUpdate: Int { get { d.object(forKey: "pixelsPerUpdate") == nil ? 16 : d.integer(forKey: "pixelsPerUpdate") } set { set("pixelsPerUpdate", newValue) } }
     /// Animacje w 60 fps zamiast 30 fps (jak „High Frequency Visuals” w TMOG)
     var highFPS: Bool { get { d.bool(forKey: "highFPS") } set { set("highFPS", newValue) } }
-    /// Język interfejsu: 0 = systemowy, 1 = polski, 2 = angielski, 3 = chiński uproszczony
+    /// Stable language ID from languages.json; 0 follows system preferences.
     var language: Int { get { d.integer(forKey: "language") } set { set("language", newValue) } }
 
     /// 0 = nowoczesny macOS, 1 = klasyczny (VFD/retro)

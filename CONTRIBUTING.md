@@ -45,6 +45,10 @@ open build/Vitals.app
 
 ## Pull requests
 
+For new languages or translation corrections, see [Adding and maintaining Vitals languages](docs/localization.md).
+Translations live in a CSV catalog; the localization tool creates draft languages,
+reports missing strings and validates them before they become selectable.
+
 Keep changes focused and explain why they are needed. For UI changes, attach before/after screenshots when possible. For monitoring changes, mention the tested Mac model and macOS version.
 
 Please do not bundle unrelated refactors into a bug fix.

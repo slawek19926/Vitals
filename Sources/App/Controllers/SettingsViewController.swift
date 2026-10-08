@@ -75,8 +75,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         tempPopup.target = self; tempPopup.action = #selector(tempChanged)
         row(appearance, "Jednostka temperatury", tempPopup)
 
-        langPopup.addItems(withTitles: AppLanguage.allCases.map { $0.title })
-        langPopup.selectItem(at: prefs.language)
+        for language in AppLanguage.allCases {
+            langPopup.addItem(withTitle: language.title)
+            langPopup.lastItem?.representedObject = language.rawValue
+        }
+        langPopup.selectItem(at: AppLanguage.allCases.firstIndex { $0.rawValue == prefs.language } ?? 0)
         langPopup.target = self; langPopup.action = #selector(languageChanged)
         row(appearance, "Język interfejsu", langPopup, hint: "Systemowy używa języka macOS. Zmiana działa od razu.")
         stylePopup.addItems(withTitles: ["Nowoczesny macOS", "Klasyczny (wyświetlacz VFD)"].map { L($0) })
@@ -520,8 +523,8 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     }
 
     @objc private func languageChanged() {
-        guard prefs.language != langPopup.indexOfSelectedItem else { return }
-        prefs.language = langPopup.indexOfSelectedItem
+        guard let id = langPopup.selectedItem?.representedObject as? Int, prefs.language != id else { return }
+        prefs.language = id
         NotificationCenter.default.post(name: .languageChanged, object: nil)
     }
 

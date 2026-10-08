@@ -4,21 +4,21 @@ import Foundation
 enum HistoryExport {
     static let shared = Recorder()
 
-    /// Polish spreadsheets use a semicolon and decimal comma; other languages use
-    /// a comma and decimal point. Machine-readable headers stay stable during recording.
+    /// Delimiters follow language metadata; machine-readable column names stay stable.
     struct Format {
         let separator: String
         let decimalComma: Bool
         let header: String
 
         static var current: Format {
-            L10n.resolvedLanguage != .polish
-                ? Format(separator: ",", decimalComma: false,
-                         header: "time,cpu_total,cpu_user,cpu_system,ram_used_B,swap_B,disk_read_Bs,disk_write_Bs,"
-                               + "net_rx_Bs,net_tx_Bs,system_power_W,cpu_power_W,gpu_pct,hottest_C,battery_pct,processes,threads,top1_name,top1_cpu")
-                : Format(separator: ";", decimalComma: true,
-                         header: "czas;cpu_total;cpu_user;cpu_system;ram_uzyta_B;swap_B;dysk_odczyt_Bs;dysk_zapis_Bs;"
-                               + "siec_odbior_Bs;siec_nadawanie_Bs;moc_systemu_W;moc_cpu_W;gpu_proc;najgoretszy_C;bateria_proc;procesy;watki;top1_nazwa;top1_cpu")
+            let language = L10n.resolvedLanguage
+            let english = "time,cpu_total,cpu_user,cpu_system,ram_used_B,swap_B,disk_read_Bs,disk_write_Bs,"
+                        + "net_rx_Bs,net_tx_Bs,system_power_W,cpu_power_W,gpu_pct,hottest_C,battery_pct,processes,threads,top1_name,top1_cpu"
+            let polish = "czas;cpu_total;cpu_user;cpu_system;ram_uzyta_B;swap_B;dysk_odczyt_Bs;dysk_zapis_Bs;"
+                       + "siec_odbior_Bs;siec_nadawanie_Bs;moc_systemu_W;moc_cpu_W;gpu_proc;najgoretszy_C;bateria_proc;procesy;watki;top1_nazwa;top1_cpu"
+            let columns = language == .polish ? polish.components(separatedBy: ";") : english.components(separatedBy: ",")
+            return Format(separator: language.csvSeparator, decimalComma: language.decimalComma,
+                          header: columns.joined(separator: language.csvSeparator))
         }
     }
 
