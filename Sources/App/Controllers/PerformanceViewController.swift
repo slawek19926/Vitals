@@ -140,7 +140,7 @@ final class DetailView: NSView {
         }
         captionRight.orientation = .horizontal; captionRight.spacing = 8
         let captionRow = hstack([caption, spacer(), captionRight])
-        note.lineBreakMode = .byWordWrapping; note.maximumNumberOfLines = 3
+        note.lineBreakMode = .byWordWrapping; note.maximumNumberOfLines = 0
 
         var order: [NSView] = [titleLabel]
         if subtitleAboveBar { order += [subtitle, barRow] } else { order += [barRow, subtitle] }
@@ -210,7 +210,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
     private let gpuGraph = GraphView(series: 2, history: 120, accents: [.gpu, .gpu])
     private let gpuMemGraph = GraphView(series: 1, history: 120, accents: [.gpu])
     private let gpuMemLabel = FlashLabel("", size: 11)
-    private let gpuMode = NSSegmentedControl(labels: ["Ogólnie", "Silniki"], trackingMode: .selectOne, target: nil, action: nil)
+    private let gpuMode = NSSegmentedControl(labels: ["Ogólnie", "Silniki"].map { L($0) }, trackingMode: .selectOne, target: nil, action: nil)
     private let videoEnc = GraphView(series: 1, history: 120, accents: [.gpu]), videoDec = GraphView(series: 1, history: 120, accents: [.gpu])
     // NPU
     private let npuGraph = GraphView(series: 1, history: 120, accents: [.npu])
@@ -389,7 +389,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         let encNames = MediaEngine.hardwareEncoders()
         let decNames = MediaEngine.hardwareDecoders().filter { $0.1 }.map { $0.0 }
         let encHead = hstack([Label.make(L("Kodowanie wideo"), size: 11.5, weight: .semibold), spacer(), Label.make(encNames.isEmpty ? L("brak koderów sprzętowych") : encNames.joined(separator: ", "), size: 11, dim: true)])
-        let decHead = hstack([Label.make(L("Dekodowanie wideo"), size: 11.5, weight: .semibold), spacer(), Label.make(decNames.isEmpty ? "brak" : "sprzętowo: " + decNames.joined(separator: ", "), size: 11, dim: true)])
+        let decHead = hstack([Label.make(L("Dekodowanie wideo"), size: 11.5, weight: .semibold), spacer(), Label.make(decNames.isEmpty ? L("brak") : L("sprzętowo: ") + decNames.joined(separator: ", "), size: 11, dim: true)])
         for g in [videoEnc, videoDec] {
             g.borderAccent = .gpu
             g.autoScale = true
@@ -399,7 +399,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         let encCol = vstack([encHead, videoEnc], spacing: 3), decCol = vstack([decHead, videoDec], spacing: 3)
         for (h, g, c) in [(encHead, videoEnc, encCol), (decHead, videoDec, decCol)] { h.widthAnchor.constraint(equalTo: c.widthAnchor).isActive = true; g.widthAnchor.constraint(equalTo: c.widthAnchor).isActive = true }
         gpu.addContent(hstack([encCol, decCol], spacing: 10, alignment: .top, distribution: .fillEqually))
-        gpu.note.stringValue = "Aktywność silników wideo pokazujemy jako pobór mocy bloków AVE (kodowanie) i VDEC (dekodowanie) z IOReport. Procentowe wykorzystanie tych bloków nie jest udostępniane przez system."
+        gpu.note.stringValue = L("Aktywność silników wideo pokazujemy jako pobór mocy bloków AVE (kodowanie) i VDEC (dekodowanie) z IOReport. Procentowe wykorzystanie tych bloków nie jest udostępniane przez system.")
 
         // ---------------- NPU
         let npu = DetailView(.npu, statCaptions: ["Zasilane bloki", "Pobór mocy", "Energia w oknie", "Stan"])
@@ -409,7 +409,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         npuGraph.heightAnchor.constraint(equalToConstant: 320).isActive = true
         npu.addContent(npuGraph)
         npu.extra.addArrangedSubview(Label.make("ANE 0 · \(hw.aneCores) " + L("rdzeni") + " · \(hw.aneArch) · " + L("gotowy · power gated"), size: 10.5, dim: true))
-        npu.note.stringValue = "„Zasilane bloki” to udział bloków ANE niewyłączonych zasilaniem, nie wykorzystanie obliczeniowe. Na macOS 26/27 liczniki energii ANE/CPU/GPU (IOReport) są zamrożone dla wszystkich programów poza narzędziami Apple (powermetrics), także dla procesów administratora; TMOG pokazuje tu również 0,0 W."
+        npu.note.stringValue = L("„Zasilane bloki” to udział bloków ANE niewyłączonych zasilaniem, nie wykorzystanie obliczeniowe. Na macOS 26/27 liczniki energii ANE/CPU/GPU (IOReport) są zamrożone dla wszystkich programów poza narzędziami Apple (powermetrics), także dla procesów administratora; TMOG pokazuje tu również 0,0 W.")
 
         // ---------------- Dyski
         let disk = DetailView(.disk, statCaptions: ["Odczyt", "Zapis", "Łącznie odczytano", "Łącznie zapisano", "Zajętość kolejek", "Śr. czas odpowiedzi", "Pojemność", "Formatowanie", "Dysk systemowy", "Typ", "Temperatura SSD"], subtitleAboveBar: true, twoBars: true)
@@ -487,16 +487,16 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         en.extra.addArrangedSubview(tilesStack)
         tilesStack.widthAnchor.constraint(equalTo: en.extra.widthAnchor).isActive = true
         let epTitle = NSTextField(labelWithString: "")
-        epTitle.attributedStringValue = NSAttributedString(string: "Procesy o najwyższym szacowanym zapotrzebowaniu na energię", attributes: [.font: Fonts.title(17), .kern: 0.5, .foregroundColor: P.text])
+        epTitle.attributedStringValue = NSAttributedString(string: L("Procesy o najwyższym szacowanym zapotrzebowaniu na energię"), attributes: [.font: Fonts.title(17), .kern: 0.5, .foregroundColor: P.text])
         en.extra.addArrangedSubview(epTitle)
         for _ in 0..<8 { let r = BarRow(); barRows.append(r); energyProcs.addArrangedSubview(r); r.widthAnchor.constraint(equalTo: energyProcs.widthAnchor).isActive = true }
         en.extra.addArrangedSubview(energyProcs)
         energyProcs.widthAnchor.constraint(equalTo: en.extra.widthAnchor).isActive = true
-        en.note.stringValue = "Moc systemu i zasilacza pochodzi z SMC. Moc CPU / GPU / ANE / DRAM wymaga liczników energii IOReport, które macOS 26/27 udostępnia wyłącznie narzędziom Apple (powermetrics); dlatego pola pokazują „—”."
+        en.note.stringValue = L("Moc systemu i zasilacza pochodzi z SMC. Moc CPU / GPU / ANE / DRAM wymaga liczników energii IOReport, które macOS 26/27 udostępnia wyłącznie narzędziom Apple (powermetrics); dlatego pola pokazują „—”.")
 
         // ---------------- Termika
         let th = DetailView(.thermals, statCaptions: [], subtitleAboveBar: true)
-        th.caption.stringValue = "Hotspot CPU / SoC"
+        th.caption.stringValue = L("Hotspot CPU / SoC")
         let maxLabel = Label.make(L("110,0 °C"), size: 10.5, dim: true)
         th.captionRight.addArrangedSubview(maxLabel)
         thermGraph.borderAccent = .thermal; thermGraph.maxValue = 110
@@ -510,7 +510,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         th.extra.addArrangedSubview(ttRow)
         ttRow.widthAnchor.constraint(equalTo: th.extra.widthAnchor).isActive = true
         let stTitle = NSTextField(labelWithString: "")
-        stTitle.attributedStringValue = NSAttributedString(string: "Czujniki temperatury", attributes: [.font: Fonts.title(17), .kern: 0.5, .foregroundColor: P.text])
+        stTitle.attributedStringValue = NSAttributedString(string: L("Czujniki temperatury"), attributes: [.font: Fonts.title(17), .kern: 0.5, .foregroundColor: P.text])
         th.extra.addArrangedSubview(stTitle)
         th.extra.addArrangedSubview(sensorsGrid)
         sensorsGrid.widthAnchor.constraint(equalTo: th.extra.widthAnchor).isActive = true
@@ -941,7 +941,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
             guard let r = ifaceRows[itf.name] else { continue }
             let k = NetInfo.kind(for: itf.name)
             r.title.stringValue = "\(itf.name) · \(k.type)"
-            let addr = itf.addrs.isEmpty ? "bez adresu" : itf.addrs
+            let addr = itf.addrs.isEmpty ? L("bez adresu") : itf.addrs
             r.info.stringValue = "\(k.display) · \(itf.up ? L("aktywny") : L("nieaktywny")) · \(addr)"
             r.info.textColor = itf.up ? P.text : P.textDim
         }
@@ -1070,8 +1070,8 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         let eAvg = eCount > 0 ? s.cpu.perCore.prefix(eCount).reduce(0, +) / Double(eCount) : 0
         let pCount = max(0, s.cpu.perCore.count - pStart)
         let pAvg = pCount > 0 ? s.cpu.perCore.dropFirst(pStart).reduce(0, +) / Double(pCount) : 0
-        cpu.set("Rdzenie P", pCount > 0 ? "\(Fmt.percent(pAvg)) · \(pCount) rdz." : "—")
-        cpu.set("Rdzenie E", eCount > 0 ? "\(Fmt.percent(eAvg)) · \(eCount) rdz." : "—")
+        cpu.set("Rdzenie P", pCount > 0 ? "\(Fmt.percent(pAvg)) · \(pCount) " + L("rdz.") : "—")
+        cpu.set("Rdzenie E", eCount > 0 ? "\(Fmt.percent(eAvg)) · \(eCount) " + L("rdz.") : "—")
         cpu.setKV("Obciążenie 1 / 5 / 15 min", String(format: "%.2f / %.2f / %.2f", s.loadAvg[0], s.loadAvg[1], s.loadAvg[2]))
         cpu.setKV("Presja termiczna", s.thermalText)
         cpu.setKV("Moc CPU", pw.available ? Fmt.watts(pw.cpuWatts, precision: 2) : "—")
@@ -1134,7 +1134,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
 
         let npu = details[3]
         npu.bar.value = pw.available ? min(1, pw.aneWatts / 4) : 0
-        npu.pct.update(flash: false, pw.available ? Fmt.watts(pw.aneWatts, precision: 2) : "0,0%")
+        npu.pct.update(flash: false, pw.available ? Fmt.watts(pw.aneWatts, precision: 2) : L("0,0%"))
         npu.set("Zasilane bloki", pw.available ? (pw.aneWatts > 0.01 ? L("aktywne") : "0,0%") : "0,0%")
         npu.set("Pobór mocy", pw.available ? Fmt.watts(pw.aneWatts, precision: 2) : "0,0 W")
         npu.set("Energia w oknie", pw.available ? String(format: "%.1f mJ", pw.aneWatts * Monitor.shared.interval * 1000) : "0,0 µJ")
@@ -1183,7 +1183,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
             lastPmset = Date()
             Shell.async("/usr/bin/pmset", ["-g"], timeout: 5) { [weak self] out in
                 let low = out.split(separator: "\n").first { $0.contains("lowpowermode") }.map { $0.contains(" 1") } ?? false
-                self?.powerMode = low ? "Niski pobór energii" : "Normalny"
+                self?.powerMode = low ? L("Niski pobór energii") : L("Normalny")
                 self?.energyTiles["Tryb zasilania"]?.value.update(flash: false, self?.powerMode ?? L("—"))
             }
         }
@@ -1240,7 +1240,7 @@ final class PerformanceViewController: NSViewController, NSTableViewDataSource, 
         }
         for (g, vals) in groups {
             guard let card = sensorCards[g], let mx = vals.max() else { continue }
-            card.set(mx, text: Fmt.temp(mx) + " · \(vals.count) czujn.")
+            card.set(mx, text: Fmt.temp(mx) + " · \(vals.count) " + L("czujn."))
         }
     }
 

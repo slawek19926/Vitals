@@ -1,0 +1,2 @@
+"NSLocationWhenInUseUsageDescription" = "macOS requires location access to let the app display the Wi-Fi network name (SSID). Location is never sent or saved.";
+"NSBluetoothAlwaysUsageDescription" = "Vitals scans nearby Bluetooth Low Energy devices only when you choose Scan Nearby, to display their names and signal strength. Results stay on this Mac.";

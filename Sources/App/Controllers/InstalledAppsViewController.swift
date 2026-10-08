@@ -234,7 +234,7 @@ final class InstalledAppsViewController: NSViewController, NSSplitViewDelegate, 
         let img = NSWorkspace.shared.icon(forFile: a.path); img.size = NSSize(width: 72, height: 72); icon.image = img
         dName.stringValue = a.name; dVersion.stringValue = a.version
         dRows["Identyfikator"]?.stringValue = a.bundleID.isEmpty ? L("—") : a.bundleID
-        dRows["Źródło"]?.stringValue = a.source
+        dRows["Źródło"]?.stringValue = L(a.source)
         dRows["Ostatnio otwarta"]?.stringValue = a.lastUsed.map { Fmt.dateTime.string(from: $0) } ?? L("nigdy / nieznane")
         dRows["Zmodyfikowana"]?.stringValue = a.modified.map { Fmt.dateTime.string(from: $0) } ?? L("—")
         dRows["Rozmiar"]?.stringValue = a.size.map { Fmt.bytes($0) } ?? L("obliczanie…")
@@ -280,7 +280,10 @@ final class InstalledAppsViewController: NSViewController, NSSplitViewDelegate, 
         let alert = NSAlert()
         alert.messageText = L("Przenieść „") + "\(a.name)” " + L("do Kosza?")
         let rel = a.related ?? []
-        alert.informativeText = L("Aplikacja") + (rel.isEmpty ? "" : " oraz \(rel.count) plików powiązanych (\(Fmt.bytes(rel.reduce(0) { $0 + $1.1 })))") + " zostaną przeniesione do Kosza. Możesz je przywrócić z Kosza."
+        alert.informativeText = rel.isEmpty
+            ? L("Aplikacja zostanie przeniesiona do Kosza. Możesz ją przywrócić z Kosza.")
+            : String(format: L("Aplikacja oraz %d plików powiązanych (%@) zostaną przeniesione do Kosza. Możesz je przywrócić z Kosza."),
+                     rel.count, Fmt.bytes(rel.reduce(0) { $0 + $1.1 }))
         alert.alertStyle = .warning
         alert.addButton(withTitle: L("Przenieś do Kosza")); alert.addButton(withTitle: L("Anuluj"))
         if !rel.isEmpty { alert.showsSuppressionButton = true; alert.suppressionButton?.title = L("Tylko aplikacja, bez plików powiązanych") }

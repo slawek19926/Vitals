@@ -458,7 +458,7 @@ final class SummaryViewController: NSViewController, NSTableViewDataSource, NSTa
         if samples.count > 1 {
             topHeader.left.stringValue = "TOP \(topRows.count) · \(Fmt.time.string(from: first.time))–\(t)"
             topHeader.right.stringValue = "\(samples.count) " + L("PRÓBEK")
-            cpuFootL.stringValue = "Przedział \(Fmt.time.string(from: first.time))–\(t) · średnio \(Fmt.percent(samples.reduce(0) { $0 + $1.cpuTotal } / divisorAll)) · \(samples.count) pomiarów"
+            cpuFootL.stringValue = String(format: L("Przedział %@–%@ · średnio %@ · %d pomiarów"), Fmt.time.string(from: first.time), t, Fmt.percent(samples.reduce(0) { $0 + $1.cpuTotal } / divisorAll), samples.count)
         } else {
             topHeader.left.stringValue = "TOP \(topRows.count) · \(t)"
             topHeader.right.stringValue = "\(last.processCount)"

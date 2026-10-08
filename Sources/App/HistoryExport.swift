@@ -4,15 +4,15 @@ import Foundation
 enum HistoryExport {
     static let shared = Recorder()
 
-    /// Format pliku idzie za językiem interfejsu: polski arkusz oczekuje średnika i przecinka
-    /// dziesiętnego, angielski przecinka i kropki. Format ustalany jest raz, przy starcie zapisu.
+    /// Polish spreadsheets use a semicolon and decimal comma; other languages use
+    /// a comma and decimal point. Machine-readable headers stay stable during recording.
     struct Format {
         let separator: String
         let decimalComma: Bool
         let header: String
 
         static var current: Format {
-            L10n.isEnglish
+            L10n.resolvedLanguage != .polish
                 ? Format(separator: ",", decimalComma: false,
                          header: "time,cpu_total,cpu_user,cpu_system,ram_used_B,swap_B,disk_read_Bs,disk_write_Bs,"
                                + "net_rx_Bs,net_tx_Bs,system_power_W,cpu_power_W,gpu_pct,hottest_C,battery_pct,processes,threads,top1_name,top1_cpu")

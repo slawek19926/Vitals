@@ -5,39 +5,67 @@ enum QuickAction {
     /// Nazwa widoczna w Ustawieniach systemowych → Klawiatura → Skróty klawiszowe → Usługi
     static var title: String { L("Pokaż Vitals") }
 
-    static var url: URL {
-        let services = FileManager.default.homeDirectoryForCurrentUser
+    private static var servicesURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Services", isDirectory: true)
-        return services.appendingPathComponent("\(title).workflow", isDirectory: true)
     }
 
-    static var isInstalled: Bool { FileManager.default.fileExists(atPath: url.path) }
+    static var url: URL { servicesURL.appendingPathComponent("\(title).workflow", isDirectory: true) }
+
+    static func installedURLs(in services: URL) -> [URL] {
+        // Keep historical names even if a translation changes in a later release.
+        var names = ["Pokaż Vitals", "Show Vitals", "显示 Vitals"]
+        for language in [AppLanguage.polish, .english, .simplifiedChinese] {
+            let name = L10n.t("Pokaż Vitals", language: language)
+            if !names.contains(name) { names.append(name) }
+        }
+        return names.compactMap { name in
+            let candidate = services.appendingPathComponent("\(name).workflow", isDirectory: true)
+            return FileManager.default.fileExists(atPath: candidate.path) ? candidate : nil
+        }
+    }
+
+    static var isInstalled: Bool { isInstalled(in: servicesURL) }
+
+    static func isInstalled(in services: URL) -> Bool { !installedURLs(in: services).isEmpty }
 
     /// Zapisuje pakiet akcji i odświeża bazę usług. Zwraca nil przy powodzeniu albo opis błędu.
     @discardableResult
     static func install() -> String? {
-        let fm = FileManager.default
-        let contents = url.appendingPathComponent("Contents", isDirectory: true)
-        do {
-            if fm.fileExists(atPath: url.path) { try fm.removeItem(at: url) }
-            try fm.createDirectory(at: contents, withIntermediateDirectories: true)
-            try infoPlist.write(to: contents.appendingPathComponent("Info.plist"), atomically: true, encoding: .utf8)
-            try workflow.write(to: contents.appendingPathComponent("document.wflow"), atomically: true, encoding: .utf8)
-        } catch {
-            return error.localizedDescription
-        }
-        _ = Shell.status("/System/Library/CoreServices/pbs", ["-flush"], timeout: 15)
-        NSUpdateDynamicServices()
+        do { try install(in: servicesURL, language: L10n.resolvedLanguage) }
+        catch { return error.localizedDescription }
+        refreshServices()
         return nil
+    }
+
+    /// Filesystem-only operations allow migration tests without touching real services.
+    static func install(in services: URL, language: AppLanguage) throws {
+        let fm = FileManager.default
+        let title = L10n.t("Pokaż Vitals", language: language)
+        let destination = services.appendingPathComponent("\(title).workflow", isDirectory: true)
+        let contents = destination.appendingPathComponent("Contents", isDirectory: true)
+        try remove(in: services)
+        try fm.createDirectory(at: contents, withIntermediateDirectories: true)
+        try infoPlist(title: title).write(to: contents.appendingPathComponent("Info.plist"), atomically: true, encoding: .utf8)
+        try workflow.write(to: contents.appendingPathComponent("document.wflow"), atomically: true, encoding: .utf8)
     }
 
     @discardableResult
     static func remove() -> String? {
         guard isInstalled else { return nil }
-        do { try FileManager.default.removeItem(at: url) } catch { return error.localizedDescription }
+        do { try remove(in: servicesURL) }
+        catch { return error.localizedDescription }
+        refreshServices()
+        return nil
+    }
+
+    static func remove(in services: URL) throws {
+        for url in installedURLs(in: services) { try FileManager.default.removeItem(at: url) }
+    }
+
+    private static func refreshServices() {
         _ = Shell.status("/System/Library/CoreServices/pbs", ["-flush"], timeout: 15)
         NSUpdateDynamicServices()
-        return nil
     }
 
     /// Otwiera panel, w którym przypisuje się kombinację klawiszy
@@ -47,7 +75,7 @@ enum QuickAction {
         }
     }
 
-    private static var infoPlist: String {
+    private static func infoPlist(title: String) -> String {
         """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

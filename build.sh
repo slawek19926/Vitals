@@ -62,6 +62,7 @@ cp Resources/online.equishow.vitals.helper.plist "$APP/Contents/Library/LaunchDa
 cp "$BIN/VitalsHelper" "$APP/Contents/Library/LaunchServices/online.equishow.vitals.helper"
 cp Resources/gen/Info.plist "$APP/Contents/Info.plist"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 # Podpis: ustaw CODESIGN_IDENTITY="Apple Development: Imię Nazwisko (TEAMID)" aby pomocnik w tle (SMAppService) mógł być zatwierdzony.
 # Bez certyfikatu pakiet dostaje podpis ad-hoc (aplikacja działa, ale macOS odrzuci rejestrację LaunchDaemon).
 ID="${CODESIGN_IDENTITY:--}"

@@ -71,8 +71,8 @@ final class HelperClient {
         switch service.status {
         case .enabled: return connected ? L("włączony i połączony") : L("włączony (łączenie…)")
         case .requiresApproval: return L("wymaga zatwierdzenia w Ustawieniach systemowych → Ogólne → Elementy logowania i rozszerzenia")
-        case .notRegistered: return "niezarejestrowany"
-        case .notFound: return "nie znaleziono pliku pomocnika w pakiecie"
+        case .notRegistered: return L("niezarejestrowany")
+        case .notFound: return L("nie znaleziono pliku pomocnika w pakiecie")
         @unknown default: return L("nieznany")
         }
     }
@@ -138,7 +138,7 @@ final class HelperClient {
     private func bless() throws {
         var authRef: AuthorizationRef?
         guard AuthorizationCreate(nil, nil, [], &authRef) == errAuthorizationSuccess, let auth = authRef else {
-            throw NSError(domain: "Helper", code: 1, userInfo: [NSLocalizedDescriptionKey: "Nie można utworzyć autoryzacji."])
+            throw NSError(domain: "Helper", code: 1, userInfo: [NSLocalizedDescriptionKey: L("Nie można utworzyć autoryzacji.")])
         }
         defer { AuthorizationFree(auth, []) }
         let st = AuthorizationRequest.copyRight(kSMRightBlessPrivilegedHelper, auth: auth,
@@ -149,13 +149,13 @@ final class HelperClient {
         var cfError: Unmanaged<CFError>?
         typealias BlessFn = @convention(c) (CFString, CFString, AuthorizationRef?, UnsafeMutablePointer<Unmanaged<CFError>?>?) -> Bool
         guard let h = dlopen("/System/Library/Frameworks/ServiceManagement.framework/ServiceManagement", RTLD_LAZY), let sym = dlsym(h, "SMJobBless") else {
-            throw NSError(domain: "Helper", code: 2, userInfo: [NSLocalizedDescriptionKey: "SMJobBless niedostępne."])
+            throw NSError(domain: "Helper", code: 2, userInfo: [NSLocalizedDescriptionKey: L("SMJobBless niedostępne.")])
         }
         defer { dlclose(h) }
         let fn = unsafeBitCast(sym, to: BlessFn.self)
         let ok = fn("system" as CFString, helperMachService as CFString, auth, &cfError)
         if !ok {
-            let msg = cfError?.takeRetainedValue().localizedDescription ?? "nieznany błąd"
+            let msg = cfError?.takeRetainedValue().localizedDescription ?? L("nieznany błąd")
             throw NSError(domain: "Helper", code: 3, userInfo: [NSLocalizedDescriptionKey: "SMJobBless: \(msg)"])
         }
         disconnect()
@@ -171,7 +171,7 @@ final class HelperClient {
                 throw NSError(domain: "Helper", code: Int(result.exitCode), userInfo: [NSLocalizedDescriptionKey: error])
             }
             guard !blessed else {
-                throw NSError(domain: "Helper", code: 4, userInfo: [NSLocalizedDescriptionKey: "Nie udało się usunąć pomocnika."])
+                throw NSError(domain: "Helper", code: 4, userInfo: [NSLocalizedDescriptionKey: L("Nie udało się usunąć pomocnika.")])
             }
         }
         disconnect()

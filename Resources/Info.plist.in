@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key><string>pl</string>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array><string>pl</string><string>en</string><string>zh-Hans</string></array>
 	<key>CFBundleExecutable</key><string>Vitals</string>
 	<key>CFBundleIdentifier</key><string>online.equishow.vitals</string>
 	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>

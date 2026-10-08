@@ -125,7 +125,7 @@ final class SystemOverviewViewController: NSViewController, PageRefreshable {
         set("machine", "Identyfikator", hw.model)
         set("machine", "Numer seryjny", Self.serialNumber())
         set("machine", "Procesor", hw.cpuBrand)
-        set("machine", "Rdzenie", "\(hw.ncpu) logicznych · \(hw.perfCores) P + \(hw.effCores) E")
+        set("machine", "Rdzenie", "\(hw.ncpu) \(L("procesorów logicznych")) · \(hw.perfCores) P + \(hw.effCores) E")
         set("machine", "Grafika", "\(hw.gpuName) · \(hw.gpuCores) " + L("rdzeni"))
         set("machine", "Neural Engine", hw.aneCores > 0 ? "\(hw.aneCores) " + L("rdzeni") + " · \(hw.aneArch)" : "—")
         set("machine", "Pamięć", Fmt.bytes(hw.memTotal, precision: 0) + " " + Monitor.shared.memoryDescription)
@@ -156,7 +156,7 @@ final class SystemOverviewViewController: NSViewController, PageRefreshable {
         set("user", "Zalogowany", NSUserName() + " (" + NSFullUserName() + ")")
         set("user", "Katalog domowy", NSHomeDirectory())
         set("user", "Powłoka", ProcessInfo.processInfo.environment["SHELL"] ?? "—")
-        set("user", "Uprawnienia administratora", Monitor.isRoot ? "root" : (Monitor.privileged ? "przez pomocnika" : "zwykły użytkownik"))
+        set("user", "Uprawnienia administratora", Monitor.isRoot ? "root" : (Monitor.privileged ? L("przez pomocnika") : L("zwykły użytkownik")))
         let users = Set(s.processes.filter { $0.uid >= 500 }.map(\.user)).sorted()
         set("user", "Zalogowanych użytkowników", users.isEmpty ? "—" : users.joined(separator: ", "))
 
@@ -165,12 +165,12 @@ final class SystemOverviewViewController: NSViewController, PageRefreshable {
         set("load", "Procesy", "\(s.processes.count)")
         set("load", "Wątki", "\(s.totalThreads)")
         set("load", "Obciążenie CPU", "\(Fmt.percent(s.cpu.total)) · " + L("obciążenie") + " \(String(format: "%.2f", s.loadAvg[0]))")
-        set("load", "Pamięć w użyciu", "\(Fmt.bytes(s.mem.used)) z \(Fmt.bytes(s.mem.total, precision: 0)) · \(s.memPressureText)")
+        set("load", "Pamięć w użyciu", "\(Fmt.bytes(s.mem.used)) \(L("z")) \(Fmt.bytes(s.mem.total, precision: 0)) · \(s.memPressureText)")
         set("load", "Najgorętszy czujnik", s.hotspot.map { Fmt.temp($0) } ?? "—")
         set("load", "Pobór mocy", s.sysWatts.map { Fmt.watts($0) } ?? "—")
 
         set("app", "Wersja", AppVersion.full)
-        set("app", "Pomocnik uprzywilejowany", Monitor.shared.helperActive ? "aktywny" : "nieaktywny")
+        set("app", "Pomocnik uprzywilejowany", Monitor.shared.helperActive ? L("aktywny") : L("nieaktywny"))
         set("app", "Tempo pomiarów", String(format: L("%.0f na sekundę"), 1 / max(0.01, Monitor.shared.interval)))
         set("app", "Zakres wykresów", "\(Prefs.shared.graphSpanSeconds) s")
     }
@@ -190,7 +190,7 @@ final class SystemOverviewViewController: NSViewController, PageRefreshable {
                     "SIP": sip.isEmpty ? "—" : sip.replacingOccurrences(of: "System Integrity Protection status: ", with: ""),
                     "FileVault": fv.isEmpty ? "—" : fv,
                     "Gatekeeper": gk.isEmpty ? "—" : gk,
-                    "Zapora sieciowa": fw <= 0 ? "wyłączona" : (fw == 2 ? "włączona (blokuje przychodzące)" : "włączona"),
+                    "Zapora sieciowa": fw <= 0 ? L("wyłączona") : (fw == 2 ? L("włączona (blokuje przychodzące)") : L("włączona")),
                 ]
             }
         }

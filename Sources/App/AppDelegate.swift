@@ -85,7 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         guard !UserDefaults.standard.bool(forKey: "adminAsked") else { return }
         let alert = NSAlert()
         alert.messageText = L("Uruchomić z uprawnieniami administratora?")
-        alert.informativeText = "macOS udostępnia CPU, pamięć i wątki procesów innych użytkowników oraz liczniki energii CPU / GPU / Neural Engine tylko procesom z uprawnieniami administratora. Bez nich te pola pokażą „Brak dostępu”.\n\nPo kliknięciu „Uruchom jako administrator” system poprosi o hasło w standardowym oknie macOS i aplikacja uruchomi się ponownie."
+        alert.informativeText = L("macOS udostępnia CPU, pamięć i wątki procesów innych użytkowników oraz liczniki energii CPU / GPU / Neural Engine tylko procesom z uprawnieniami administratora. Bez nich te pola pokażą „Brak dostępu”.\n\nPo kliknięciu „Uruchom jako administrator” system poprosi o hasło w standardowym oknie macOS i aplikacja uruchomi się ponownie.")
         alert.alertStyle = .informational
         alert.addButton(withTitle: L("Uruchom jako administrator"))
         alert.addButton(withTitle: L("Kontynuuj bez uprawnień"))
@@ -123,7 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
         let view = NSMenu(title: L("Widok"))
         for (i, t) in ["Podsumowanie", "Wydajność", "Procesy", "Informacje o systemie", "Usługi", "Użytkownicy", "Zasilanie i czujniki", "Apple Silicon", "Połączenia", "Elementy startowe", "Zainstalowane aplikacje", "Sterowniki", "Miejsce na dysku", "Benchmarki"].enumerated() {
-            let it = view.addItem(withTitle: t, action: #selector(selectPage(_:)), keyEquivalent: i < 9 ? "\(i + 1)" : (i == 9 ? "0" : ""))
+            let it = view.addItem(withTitle: L(t), action: #selector(selectPage(_:)), keyEquivalent: i < 9 ? "\(i + 1)" : (i == 9 ? "0" : ""))
             it.tag = i
         }
         let settingsItem = view.addItem(withTitle: L("Ustawienia"), action: #selector(selectPage(_:)), keyEquivalent: ",")
@@ -145,7 +145,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         view.addItem(.separator())
         view.addItem(withTitle: L("Odśwież teraz"), action: #selector(refreshNow(_:)), keyEquivalent: "r")
         let interval = NSMenu(title: L("Częstotliwość odświeżania"))
-        for (t, ms) in [(L("Bardzo szybko — 10/s"), 100), (L("Szybko — 4/s"), 250), (L("Normalnie — 2/s"), 500), (L("Wolno — 1/s"), 1000), ("Oszczędnie — co 2 s", 2000)] {
+        for (t, ms) in [(L("Bardzo szybko — 10/s"), 100), (L("Szybko — 4/s"), 250), (L("Normalnie — 2/s"), 500), (L("Wolno — 1/s"), 1000), (L("Oszczędnie — co 2 s"), 2000)] {
             let it = interval.addItem(withTitle: t, action: #selector(setInterval(_:)), keyEquivalent: ""); it.tag = ms
         }
         let intervalItem = view.addItem(withTitle: L("Częstotliwość odświeżania"), action: nil, keyEquivalent: ""); intervalItem.submenu = interval
@@ -271,7 +271,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     @objc func runAsAdmin(_ sender: Any?) {
         let alert = NSAlert()
         alert.messageText = L("Uruchomić ponownie jako administrator?")
-        alert.informativeText = "Aplikacja zostanie uruchomiona z uprawnieniami administratora, dzięki czemu pokaże CPU i pamięć wszystkich procesów oraz pozwoli je kończyć. System poprosi o hasło w standardowym oknie macOS."
+        alert.informativeText = L("Aplikacja zostanie uruchomiona z uprawnieniami administratora, dzięki czemu pokaże CPU i pamięć wszystkich procesów oraz pozwoli je kończyć. System poprosi o hasło w standardowym oknie macOS.")
         alert.addButton(withTitle: L("Kontynuuj"))
         alert.addButton(withTitle: L("Anuluj"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }

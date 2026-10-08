@@ -56,7 +56,7 @@ final class AlertCenter {
         let swapGB = Double(s.mem.swapUsed) / 1_073_741_824
         conditions.append(("swap", swapGB >= Double(p.alertSwapGB), L("Duże użycie swapu"),
                            "\(Fmt.bytes(s.mem.swapUsed)) " + L("w pliku wymiany") + " (" + L("próg") + " \(p.alertSwapGB) GB)", .warning))
-        conditions.append(("mempressure", s.mem.pressureLevel >= 2, "Presja pamięci",
+        conditions.append(("mempressure", s.mem.pressureLevel >= 2, L("Presja pamięci"),
                            L("System zgłasza presję") + ": \(s.memPressureText)", s.mem.pressureLevel >= 4 ? .critical : .warning))
 
         if let v = Monitor.volumes().first(where: { $0.mount == "/" }), v.total > 0 {
@@ -66,7 +66,7 @@ final class AlertCenter {
                                freePct <= 3 ? .critical : .warning))
         }
         if let b = s.battery, b.present, !b.onAC {
-            conditions.append(("battery", b.percent <= p.alertBatteryPercent, "Niski poziom baterii",
+            conditions.append(("battery", b.percent <= p.alertBatteryPercent, L("Niski poziom baterii"),
                                "\(b.percent)% " + L("naładowania") + " (" + L("próg") + " \(p.alertBatteryPercent)%)",
                                b.percent <= 10 ? .critical : .warning))
         }

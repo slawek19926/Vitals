@@ -66,7 +66,7 @@ CPU, GPU, Neural Engine, SMC, processes, disks, network, SMART, benchmarks and s
 | **Panels and menu bar** | Floating desktop panels (CPU, memory, GPU, temperature, network, disks, power) with a live graph, dragging and adjustable opacity. In the menu bar each metric gets its own item — value, mini graph or both; left-click opens a panel with graphs and the busiest processes. |
 | **And the rest** | launchd services with actions, users with their processes, TCP/UDP connections grouped by app and destination (expand a destination to inspect its sockets and local ports; socket view and remote/listening/local filters), Bluetooth with connected/paired devices and on-demand nearby BLE scanning, startup items, installed apps, drivers and kernel extensions, system and hardware information. |
 
-On top of that: **Polish and English switched on the fly** (no restart), **launch at login** and background operation (closing the window leaves the app in the menu bar and slows sampling down), light / dark / monochrome phosphor themes, configurable columns in every table, measurement history exported to CSV.
+On top of that: **Polish, English and Simplified Chinese switched on the fly** (no restart), **launch at login** and background operation (closing the window leaves the app in the menu bar and slows sampling down), light / dark / monochrome phosphor themes, configurable columns in every table, measurement history exported to CSV.
 
 See the [changelog](CHANGELOG.md) for release details (English first, then Polish).
 

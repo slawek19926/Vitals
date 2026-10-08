@@ -210,6 +210,7 @@ final class WidgetPanel: NSPanel {
         trackMouse()
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(themeChanged), name: .themeChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(languageChanged), name: .languageChanged, object: nil)
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
@@ -239,6 +240,12 @@ final class WidgetPanel: NSPanel {
     @objc private func themeChanged() {
         value.textColor = P.accent(kind.accent)
         closeButton.contentTintColor = P.textDim
+    }
+
+    @objc private func languageChanged() {
+        titleLabel.stringValue = kind.title
+        closeButton.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: L("Zamknij"))
+        caption.stringValue = kind.caption(Monitor.shared.latest)
     }
 
     @objc private func snapshot(_ n: Notification) {
