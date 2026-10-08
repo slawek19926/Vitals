@@ -1,29 +1,78 @@
-// L10n.swift - dwujęzyczność PL/EN. Kluczem jest polski tekst, angielski pochodzi z tabeli,
-// dzięki czemu kod czyta się tak samo jak wcześniej, a brak tłumaczenia nie psuje interfejsu.
+// L10n.swift - PL/EN/简体中文. Keys are the Polish source text; unknown keys remain readable.
 import Foundation
 
 enum AppLanguage: Int, CaseIterable {
-    case system = 0, polish = 1, english = 2
-    var title: String { ["Systemowy", "Polski", "English"][rawValue] }
+    case system = 0, polish = 1, english = 2, simplifiedChinese = 3
+    var title: String { [L("Systemowy"), "Polski", "English", "简体中文"][rawValue] }
 }
 
 enum L10n {
     static var language: AppLanguage { AppLanguage(rawValue: Prefs.shared.language) ?? .system }
 
-    static var isEnglish: Bool {
-        switch language {
-        case .polish: return false
-        case .english: return true
-        case .system: return !(Locale.preferredLanguages.first?.lowercased().hasPrefix("pl") ?? false)
+    static var resolvedLanguage: AppLanguage { resolve(language, preferredLanguages: Locale.preferredLanguages) }
+
+    static func resolve(_ language: AppLanguage, preferredLanguages: [String]) -> AppLanguage {
+        guard language == .system else { return language }
+        let locale = Locale(identifier: preferredLanguages.first ?? "en")
+        let code = locale.language.languageCode?.identifier
+        let script = locale.language.script?.identifier
+        if code == "pl" { return .polish }
+        if code == "zh", script != "Hant",
+           script == "Hans" || !["TW", "HK", "MO"].contains(locale.region?.identifier ?? "") {
+            return .simplifiedChinese
         }
+        return .english
     }
 
-    static func t(_ pl: String) -> String { isEnglish ? (table[pl] ?? pl) : pl }
+    static func t(_ pl: String, language: AppLanguage = resolvedLanguage) -> String {
+        switch language {
+        case .polish: return pl
+        case .simplifiedChinese: return simplifiedChineseTable[pl] ?? table[pl] ?? pl
+        case .english: return table[pl] ?? pl
+        case .system: return t(pl, language: resolvedLanguage)
+        }
+    }
 
     /// Tabela budowana z par, a nie z literału słownika: powtórzony klucz nie wywróci aplikacji
     static let table: [String: String] = Dictionary(pairsList, uniquingKeysWith: { first, _ in first })
 
     private static let pairsList: [(String, String)] = [
+        ("%d bibliotek", "%d libraries"),
+        ("Przedział %@–%@ · średnio %@ · %d pomiarów", "Range %@–%@ · average %@ · %d samples"),
+        ("Audio", "Audio"),
+        ("Systemowy", "System"),
+        ("OK", "OK"),
+        ("8 pikseli", "8 pixels"),
+        ("12 pikseli", "12 pixels"),
+        ("16 pikseli", "16 pixels"),
+        ("24 piksele", "24 pixels"),
+        ("10 sekund", "10 seconds"),
+        ("20 sekund", "20 seconds"),
+        ("30 sekund", "30 seconds"),
+        ("1 minuta", "1 minute"),
+        ("2 minuty", "2 minutes"),
+        ("5 minut", "5 minutes"),
+        ("Pomocnik", "Helper"),
+        ("niezarejestrowany", "not registered"),
+        ("Nie udało się usunąć pomocnika.", "Could not remove the helper."),
+        ("szum", "noise"),
+        ("rdz.", "cores"),
+        ("czujn.", "sensors"),
+        ("0,0%", "0.0%"),
+        ("0,0 W", "0.0 W"),
+        ("0,0 µJ", "0.0 µJ"),
+        ("Hotspot", "Hotspot"),
+        ("Hotspot CPU / SoC", "CPU / SoC hotspot"),
+        ("On-package", "On-package"),
+        ("Apple silicon power management", "Apple silicon power management"),
+        ("macOS udostępnia CPU, pamięć i wątki procesów innych użytkowników oraz liczniki energii CPU / GPU / Neural Engine tylko procesom z uprawnieniami administratora. Bez nich te pola pokażą „Brak dostępu”.\n\nPo kliknięciu „Uruchom jako administrator” system poprosi o hasło w standardowym oknie macOS i aplikacja uruchomi się ponownie.", "macOS exposes CPU, memory and threads of other users' processes and the CPU / GPU / Neural Engine energy counters only to processes with administrator privileges. Without them, these fields show “No access”.\n\nAfter you click “Run as administrator”, the system requests your password in the standard macOS dialog and the app restarts."),
+        ("Aplikacja zostanie uruchomiona z uprawnieniami administratora, dzięki czemu pokaże CPU i pamięć wszystkich procesów oraz pozwoli je kończyć. System poprosi o hasło w standardowym oknie macOS.", "The app will run with administrator privileges to show CPU and memory for all processes and allow terminating them. The system requests your password in the standard macOS dialog."),
+        ("Dwukrotne kliknięcie pokazuje plik w Finderze. CPU i pamięć procesów innych użytkowników: „Brak dostępu” – włącz pomocnika uprzywilejowanego w Ustawieniach.", "Double-click reveals the file in Finder. CPU and memory for other users' processes show “No access” — enable the privileged helper in Settings."),
+        ("Aktywność silników wideo pokazujemy jako pobór mocy bloków AVE (kodowanie) i VDEC (dekodowanie) z IOReport. Procentowe wykorzystanie tych bloków nie jest udostępniane przez system.", "Video engine activity is shown as power draw of AVE (encoding) and VDEC (decoding) blocks from IOReport. The system does not expose percentage utilization of these blocks."),
+        ("„Zasilane bloki” to udział bloków ANE niewyłączonych zasilaniem, nie wykorzystanie obliczeniowe. Na macOS 26/27 liczniki energii ANE/CPU/GPU (IOReport) są zamrożone dla wszystkich programów poza narzędziami Apple (powermetrics), także dla procesów administratora; TMOG pokazuje tu również 0,0 W.", "“Powered blocks” is the share of ANE blocks whose power is not gated off, not compute utilization. On macOS 26/27 the ANE/CPU/GPU energy counters (IOReport) are frozen for all programs except Apple tools (powermetrics), including administrator processes; TMOG also shows 0.0 W here."),
+        ("Moc systemu i zasilacza pochodzi z SMC. Moc CPU / GPU / ANE / DRAM wymaga liczników energii IOReport, które macOS 26/27 udostępnia wyłącznie narzędziom Apple (powermetrics); dlatego pola pokazują „—”.", "System and adapter power come from SMC. CPU / GPU / ANE / DRAM power requires IOReport energy counters, which macOS 26/27 exposes only to Apple tools (powermetrics); these fields therefore show “—”."),
+        ("Aplikacja zostanie przeniesiona do Kosza. Możesz ją przywrócić z Kosza.", "The app will be moved to the Trash. You can restore it from the Trash."),
+        ("Aplikacja oraz %d plików powiązanych (%@) zostaną przeniesione do Kosza. Możesz je przywrócić z Kosza.", "The app and %d related files (%@) will be moved to the Trash. You can restore them from the Trash."),
         ("Skanuj w pobliżu", "Scan Nearby"),
         ("Zatrzymaj skanowanie", "Stop Scanning"),
         ("Ustawienia Bluetooth…", "Bluetooth Settings…"),

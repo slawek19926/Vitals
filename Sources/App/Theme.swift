@@ -354,7 +354,7 @@ enum ThermalScale {
 enum Fonts {
     static func title(_ size: CGFloat) -> NSFont {
         if Prefs.shared.modernUI { return NSFont.systemFont(ofSize: size, weight: .bold) }
-        if Prefs.shared.systemTitleFont { return NSFont.systemFont(ofSize: size, weight: .light) }
+        if Prefs.shared.systemTitleFont || L10n.resolvedLanguage == .simplifiedChinese { return NSFont.systemFont(ofSize: size, weight: .light) }
         return NSFont(name: "AvenirNext-UltraLight", size: size) ?? NSFont.systemFont(ofSize: size, weight: .ultraLight)
     }
     static func mono(_ size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont {
@@ -365,7 +365,7 @@ enum Fonts {
     }
     /// Nagłówki kart: w nowoczesnym stylu zwykły SF półgruby, w klasycznym monospace jak na wyświetlaczu
     static func display(_ size: CGFloat) -> NSFont {
-        if Prefs.shared.modernUI { return NSFont.systemFont(ofSize: size, weight: .semibold) }
+        if Prefs.shared.modernUI || L10n.resolvedLanguage == .simplifiedChinese { return NSFont.systemFont(ofSize: size, weight: .semibold) }
         return NSFont(name: "Menlo-Bold", size: size) ?? NSFont.monospacedSystemFont(ofSize: size, weight: .bold)
     }
 }

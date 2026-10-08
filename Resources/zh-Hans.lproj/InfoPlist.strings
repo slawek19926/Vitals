@@ -1,0 +1,2 @@
+"NSLocationWhenInUseUsageDescription" = "macOS 需要位置访问权限，才能让应用显示 Wi-Fi 网络名称（SSID）。位置信息不会被发送或保存。";
+"NSBluetoothAlwaysUsageDescription" = "Vitals 仅在你选择“扫描附近设备”后扫描附近的蓝牙低功耗设备，以显示其名称和信号强度。扫描结果仅保留在此 Mac 上。";

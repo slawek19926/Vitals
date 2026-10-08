@@ -420,7 +420,7 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
             dName.stringValue = L("Wybierz proces, aby zobaczyć szczegóły")
             dName.textColor = P.text
             dPath.stringValue = Monitor.privileged ? L("Dwukrotne kliknięcie pokazuje plik w Finderze.") :
-                "Dwukrotne kliknięcie pokazuje plik w Finderze. CPU i pamięć procesów innych użytkowników: „Brak dostępu” – włącz pomocnika uprzywilejowanego w Ustawieniach."
+                L("Dwukrotne kliknięcie pokazuje plik w Finderze. CPU i pamięć procesów innych użytkowników: „Brak dostępu” – włącz pomocnika uprzywilejowanego w Ustawieniach.")
             dPath.textColor = P.textDim
             for v in dValues.values { v.stringValue = L("—") }
             endButton.isEnabled = false; forceButton.isEnabled = false

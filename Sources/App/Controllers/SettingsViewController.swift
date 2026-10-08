@@ -268,7 +268,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
             hint: "Panel staje się w pełni widoczny, gdy najedziesz na niego kursorem. Przeciągasz go za tło, a zamykasz krzyżykiem w rogu.")
 
         let about = section("O programie", icon: "info.circle")
-        let versionRow = KeyValueRow("Wersja", "\(AppVersion.full) (zbudowano \(AppVersion.buildDate))", keyWidth: 220)
+        let versionRow = KeyValueRow("Wersja", "\(AppVersion.full) (\(L("zbudowano")) \(AppVersion.buildDate))", keyWidth: 220)
         about.add(versionRow)
         updateSwitch.state = prefs.autoUpdateCheck ? .on : .off
         updateSwitch.target = self; updateSwitch.action = #selector(updateCheckChanged)
@@ -398,7 +398,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         card.add(h)
         if let hint {
             let hl = Label.make(L(hint), size: 10.5, dim: true)
-            hl.lineBreakMode = .byWordWrapping; hl.maximumNumberOfLines = 2
+            hl.lineBreakMode = .byWordWrapping; hl.maximumNumberOfLines = 0
             card.add(hl)
             card.stack.setCustomSpacing(2, after: h)
         }
@@ -588,10 +588,10 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     @objc private func copyVersion() {
         let hw = Monitor.shared.hardware
         let text = """
-        Vitals \(AppVersion.full) (zbudowano \(AppVersion.buildDate))
+        Vitals \(AppVersion.full) (\(L("zbudowano")) \(AppVersion.buildDate))
         \(hw.marketingName) \(hw.model) · \(hw.cpuBrand) · \(Fmt.bytes(hw.memTotal, precision: 0))
         macOS \(hw.osVersion) (\(hw.osBuild)) · \(hw.kernel)
-        Pomocnik: \(HelperClient.shared.statusText)
+        \(L("Pomocnik")): \(HelperClient.shared.statusText)
         """
         NSPasteboard.general.clearContents(); NSPasteboard.general.setString(text, forType: .string)
     }

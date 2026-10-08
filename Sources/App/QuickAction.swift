@@ -8,7 +8,16 @@ enum QuickAction {
     static var url: URL {
         let services = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Services", isDirectory: true)
-        return services.appendingPathComponent("\(title).workflow", isDirectory: true)
+        return installedURL(in: services) ?? services.appendingPathComponent("\(title).workflow", isDirectory: true)
+    }
+
+    static func installedURL(in services: URL) -> URL? {
+        for language in [AppLanguage.polish, .english, .simplifiedChinese] {
+            let name = L10n.t("Pokaż Vitals", language: language)
+            let candidate = services.appendingPathComponent("\(name).workflow", isDirectory: true)
+            if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+        }
+        return nil
     }
 
     static var isInstalled: Bool { FileManager.default.fileExists(atPath: url.path) }

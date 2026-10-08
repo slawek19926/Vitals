@@ -361,9 +361,9 @@ final class DriversViewController: NSViewController, NSTableViewDataSource, NSTa
         dName.textColor = P.text
         dBundle.stringValue = d.bundleID
         dBundle.textColor = P.textDim
-        dState.stringValue = d.loaded ? "● " + d.state : "○ " + d.state
+        dState.stringValue = (d.loaded ? "● " : "○ ") + L(d.state)
         dState.textColor = d.loaded ? P.good : P.textDim
-        dRows["Rodzaj"]?.stringValue = d.kind.rawValue
+        dRows["Rodzaj"]?.stringValue = L(d.kind.rawValue)
         dRows["Wersja"]?.stringValue = d.version
         dRows["Producent"]?.stringValue = d.vendor
         dRows["Indeks ładowania"]?.stringValue = d.index.map { "\($0)" } ?? L("—")
@@ -371,7 +371,7 @@ final class DriversViewController: NSViewController, NSTableViewDataSource, NSTa
         dRows["Rozmiar"]?.stringValue = d.size.map { Fmt.bytes($0) } ?? L("—")
         dRows["Pamięć zablokowana"]?.stringValue = d.wired.map { Fmt.bytes($0) } ?? L("—")
         dRows["Zależy od"]?.stringValue = d.dependencies.isEmpty
-            ? (d.libraryCount > 0 ? "\(d.libraryCount) bibliotek" : "—")
+            ? (d.libraryCount > 0 ? String(format: L("%d bibliotek"), d.libraryCount) : "—")
             : "\(d.dependencies.count) " + L("rozszerzeń (indeksy:") + " \(d.dependencies.prefix(8).map(String.init).joined(separator: ", "))\(d.dependencies.count > 8 ? "…" : ""))"
         dRows["UUID"]?.stringValue = d.uuid ?? L("—")
         dRows["Lokalizacja"]?.stringValue = d.path
@@ -393,8 +393,8 @@ final class DriversViewController: NSViewController, NSTableViewDataSource, NSTa
 
     @objc private func copyDetails() {
         guard let d = selected else { return }
-        var text = "\(d.name)\n\(d.bundleID)\n\(d.state)\n\n"
-        for k in Self.detailKeys { text += "\(k): \(dRows[k]?.stringValue ?? "—")\n" }
+        var text = "\(d.name)\n\(d.bundleID)\n\(L(d.state))\n\n"
+        for k in Self.detailKeys { text += "\(L(k)): \(dRows[k]?.stringValue ?? "—")\n" }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
     }

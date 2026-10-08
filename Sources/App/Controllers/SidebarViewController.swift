@@ -48,7 +48,7 @@ final class SidebarActionRow: NSView {
 final class SidebarViewController: NSViewController, NSTableViewDataSource, NSTableViewDelegate {
     struct Item { let title: String; let icon: String; let page: Int }
     enum Row { case header(String); case item(Item) }
-    static let staticRows: [Row] = [
+    static var staticRows: [Row] { [
         .item(Item(title: L("Podsumowanie"), icon: "gauge.with.dots.needle.33percent", page: 0)),
         .item(Item(title: L("Wydajność"), icon: "waveform.path.ecg", page: 1)),
         .item(Item(title: L("Procesy"), icon: "list.bullet.rectangle", page: 2)),
@@ -67,7 +67,7 @@ final class SidebarViewController: NSViewController, NSTableViewDataSource, NSTa
         .item(Item(title: L("Miejsce na dysku"), icon: "chart.pie", page: 12)),
         .item(Item(title: L("Benchmarki"), icon: "speedometer", page: 13)),
         .item(Item(title: L("Zdrowie systemu"), icon: "heart.text.square", page: 15)),
-    ]
+    ] }
     let rows: [Row] = SidebarViewController.staticRows
     var onSelect: ((Int) -> Void)?
 
