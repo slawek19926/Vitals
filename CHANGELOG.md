@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.2.1.152 — 2026-10-08
+
+### English
+
+This release introduces a maintainable localization catalog and tools for adding languages. Polish, English and Simplified Chinese remain available with their existing translations.
+
+#### New and improved
+
+- **CSV translation catalog:** all 1,317 UI messages and both privacy descriptions now live in a catalog with stable IDs and language columns. Historical Polish source keys remain compatible.
+- **Language contributor tools:** LocalizationTool creates draft language columns, reports missing translations, validates text, and enables a language only when its catalog is complete. Drafts stay hidden from Settings and system-language selection.
+- **Dynamic language registry:** Settings, locale matching, heading fonts, quantity rules and CSV export conventions use language metadata. Existing preference IDs are preserved, and disabled drafts do not shift the selected language.
+- **Automatic packaging:** enabled languages and localized macOS privacy resources are generated from the catalog and bundled before signing.
+- See the [language contributor guide](https://github.com/slawek19926/Vitals/blob/v1.2.1.152/docs/localization.md) for the workflow.
+
+#### Fixes and validation
+
+- Quick Actions carry a language-independent identity. Renaming a translation or disabling a language no longer leaves a second installed workflow; legacy Polish, English and Chinese names remain recognized.
+- Workflow discovery deduplicates filesystem aliases referring to the same item.
+- Catalog validation checks duplicate IDs, legacy aliases, missing translations, formatting parameters and paragraph breaks. It runs during packaging and in CI.
+- All 72 regression tests passed. Isolated GUI checks verified adding languages through catalog data, hiding unfinished drafts and switching back to Chinese. Original translations and packaged resources were compared with their previous versions.
+
+#### Downloads
+
+- Use Vitals-1.2.1.152.zip for extraction or the in-app updater, or open Vitals-1.2.1.152.dmg and drag Vitals into Applications.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie wprowadza katalog tłumaczeń i narzędzia ułatwiające dodawanie języków. Polski, angielski i chiński uproszczony pozostają dostępne z dotychczasowymi tłumaczeniami.
+
+#### Nowości i usprawnienia
+
+- **Katalog CSV:** wszystkie 1317 tekstów interfejsu i oba opisy uprawnień są teraz zapisane w katalogu ze stałymi identyfikatorami i kolumnami języków. Zachowano zgodność ze starszymi polskimi kluczami w kodzie.
+- **Narzędzia dla tłumaczy:** LocalizationTool tworzy kolumny języków roboczych, pokazuje brakujące wpisy, sprawdza teksty i włącza język dopiero po uzupełnieniu katalogu. Nieukończone języki są ukryte w Ustawieniach i przy wyborze języka systemowego.
+- **Dynamiczna lista języków:** ustawienia, dopasowanie języka systemowego, czcionki nagłówków, odmiany liczebników i format eksportu CSV korzystają z metadanych. Dotychczasowe identyfikatory preferencji są zachowane, a ukryte języki robocze nie przesuwają zapisanego wyboru.
+- **Automatyczne pakowanie:** lista aktywnych języków i lokalizowane opisy uprawnień macOS powstają z katalogu i trafiają do aplikacji przed podpisaniem.
+- Sposób dodawania języka opisuje [instrukcja dla tłumaczy](https://github.com/slawek19926/Vitals/blob/v1.2.1.152/docs/localization.md).
+
+#### Poprawki i weryfikacja
+
+- Akcje szybkie mają identyfikator niezależny od języka. Zmiana tłumaczenia nazwy lub wyłączenie języka nie pozostawia drugiego workflow; starsze polskie, angielskie i chińskie nazwy nadal są rozpoznawane.
+- Wykrywanie workflow pomija powielone ścieżki prowadzące do tego samego elementu.
+- Walidacja katalogu sprawdza powtórzone identyfikatory i klucze historyczne, brakujące tłumaczenia, parametry formatowania i podziały akapitów. Uruchamia się podczas pakowania oraz w CI.
+- Wszystkie 72 testy regresyjne przeszły. W osobnej kopii aplikacji sprawdzono dodanie języków przez dane katalogu, ukrywanie nieukończonych tłumaczeń i przełączanie na chiński. Dotychczasowe tłumaczenia i zasoby pakietu porównano z wcześniejszą wersją.
+
+#### Pobieranie
+
+- Użyj Vitals-1.2.1.152.zip do rozpakowania lub aktualizacji w aplikacji albo otwórz Vitals-1.2.1.152.dmg i przeciągnij Vitals do Aplikacji.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.2.0.151 — 2026-10-08
 
 ### English
