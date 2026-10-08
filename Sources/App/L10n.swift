@@ -13,13 +13,17 @@ enum L10n {
 
     static func resolve(_ language: AppLanguage, preferredLanguages: [String]) -> AppLanguage {
         guard language == .system else { return language }
-        let locale = Locale(identifier: preferredLanguages.first ?? "en")
-        let code = locale.language.languageCode?.identifier
-        let script = locale.language.script?.identifier
-        if code == "pl" { return .polish }
-        if code == "zh", script != "Hant",
-           script == "Hans" || !["TW", "HK", "MO"].contains(locale.region?.identifier ?? "") {
-            return .simplifiedChinese
+        for identifier in preferredLanguages {
+            let locale = Locale(identifier: identifier)
+            switch locale.language.languageCode?.identifier {
+            case "pl": return .polish
+            case "en": return .english
+            case "zh":
+                // Locale infers Hans/Hant from the region when no script is specified.
+                // An explicit script takes precedence (e.g. zh-Hant-CN stays Traditional).
+                if locale.language.script?.identifier == "Hans" { return .simplifiedChinese }
+            default: break
+            }
         }
         return .english
     }

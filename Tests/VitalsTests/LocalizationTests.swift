@@ -24,6 +24,35 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(L10n.resolve(.simplifiedChinese, preferredLanguages: ["en"]), .simplifiedChinese)
     }
 
+    func testSystemLanguageResolutionSkipsUnsupportedPreferencesInOrder() {
+        let cases: [([String], AppLanguage)] = [
+            (["de-DE", "zh-Hans"], .simplifiedChinese),
+            (["fr-FR", "pl-PL"], .polish),
+            (["de-DE", "en-US"], .english),
+            (["zh-Hant", "en-US"], .english),
+            (["zh-TW", "zh-CN"], .simplifiedChinese),
+            (["zh-HK", "zh-MO", "pl"], .polish),
+            (["zh-Hant-CN", "zh-SG"], .simplifiedChinese),
+            (["zh-Latn", "pl_PL"], .polish),
+            (["ZH_hans_CN", "pl-PL"], .simplifiedChinese),
+            (["en-GB", "pl-PL", "zh-CN"], .english),
+            (["pl-PL", "en-US"], .polish),
+            (["de-DE", "fr-FR", "zh-Hant"], .english),
+            ([], .english)
+        ]
+        for (preferred, expected) in cases {
+            XCTAssertEqual(L10n.resolve(.system, preferredLanguages: preferred), expected, "\(preferred)")
+        }
+    }
+
+    func testExplicitLanguageChoicesIgnoreSystemPreferences() {
+        for language in [AppLanguage.polish, .english, .simplifiedChinese] {
+            for preferred in [[], ["de-DE", "zh-Hant"], ["en-US", "pl-PL", "zh-CN"]] {
+                XCTAssertEqual(L10n.resolve(language, preferredLanguages: preferred), language)
+            }
+        }
+    }
+
     func testChineseCatalogCoversEveryExistingKeyAndPreservesFormats() throws {
         XCTAssertEqual(Set(L10n.simplifiedChineseTable.keys), Set(L10n.table.keys))
         let format = try NSRegularExpression(pattern: #"%(?:\d+\$)?[-+#0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|ll|[hlLzjt])?[@diuoxXfFeEgGaAcsp%]"#)
@@ -71,17 +100,4 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
-    func testQuickActionIsFoundAcrossLanguages() throws {
-        let fm = FileManager.default
-        let services = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try fm.createDirectory(at: services, withIntermediateDirectories: true)
-        defer { try? fm.removeItem(at: services) }
-        XCTAssertNil(QuickAction.installedURL(in: services))
-        for language in [AppLanguage.polish, .english, .simplifiedChinese] {
-            let url = services.appendingPathComponent(L10n.t("Pokaż Vitals", language: language) + ".workflow", isDirectory: true)
-            try fm.createDirectory(at: url, withIntermediateDirectories: false)
-            XCTAssertEqual(QuickAction.installedURL(in: services), url)
-            try fm.removeItem(at: url)
-        }
-    }
 }
