@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.2.0.151 — 2026-10-08
+
+### English
+
+This release adds Simplified Chinese, improves connection inspection and Bluetooth discovery, and makes hardware readings more reliable. It includes changes since 1.1.1.143.
+
+#### New and improved
+
+- **Simplified Chinese:** a new language option covers menus, settings, alerts, tooltips, sidebar labels and floating panel titles. Chinese headings use native system fonts, and privacy descriptions are localized in Polish, English and Simplified Chinese. The original localization was contributed by @macong0420 in [PR #3](https://github.com/slawek19926/Vitals/pull/3).
+- **Connection inspection:** TCP/UDP sockets are grouped by application and destination. Expand a destination to inspect individual sockets and local ports, or switch to the socket view. Remote, listening and local filters, search and sorting make the list easier to navigate; the grouped table uses a more compact layout.
+- **Bluetooth:** connected and paired devices have separate sections. On-demand BLE scanning runs for 12 seconds and displays available names and signal strength. Devices that do not broadcast a name are identified as unknown; paired devices remain visible without a scan.
+- **Power and sensors:** show measured SMC temperatures, fan speeds and verified power-rail readings. Summary counts distinguish temperatures, voltages, power and currents, and omit fans when none are available. macOS does not expose every physical hardware sensor.
+
+#### Fixes
+
+- System language selection follows the complete preferred-language list, skipping unsupported locales and Traditional Chinese. Explicit user choices are preserved; English is the final fallback and the bundle development language.
+- Quick Action installation and removal clean up every known Polish, English and Simplified Chinese workflow name. Reinstallation after a language change leaves exactly one workflow.
+- Unavailable Bluetooth RSSI values are no longer presented as strong signals. Battery readings require an unambiguous product-name match.
+- SMC numeric decoding supports signed and fixed-point values; opaque keys and temperature setpoints are excluded from measured readings.
+- Duplicate file descriptors no longer inflate socket counts.
+
+#### Downloads and verification
+
+- Use Vitals-1.2.0.151.zip for extraction or the in-app updater, or open Vitals-1.2.0.151.dmg and drag Vitals into Applications.
+- All 57 regression tests passed. Release packaging, code signatures and all three localized privacy resources were verified. Chinese → English → Polish → Chinese switching was checked in an isolated app copy on macOS.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie dodaje chiński uproszczony, ułatwia przeglądanie połączeń i wykrywanie urządzeń Bluetooth oraz poprawia wiarygodność odczytów sprzętu. Obejmuje zmiany od wersji 1.1.1.143.
+
+#### Nowości i usprawnienia
+
+- **Chiński uproszczony:** nowy język obejmuje menu, ustawienia, alerty, podpowiedzi, etykiety paska bocznego i tytuły paneli. Chińskie nagłówki korzystają z systemowych czcionek, a opisy uprawnień są dostępne po polsku, angielsku i chińsku uproszczonym. Autorem pierwotnego tłumaczenia w [PR #3](https://github.com/slawek19926/Vitals/pull/3) jest @macong0420.
+- **Przeglądanie połączeń:** gniazda TCP/UDP są pogrupowane według aplikacji i celu. Cel można rozwinąć, aby zobaczyć gniazda i porty lokalne, albo przełączyć się na widok gniazd. Filtry połączeń zdalnych, nasłuchujących i lokalnych, wyszukiwanie oraz sortowanie ułatwiają przeglądanie; tabela grup ma bardziej zwarty układ.
+- **Bluetooth:** osobne sekcje urządzeń połączonych i sparowanych. Skanowanie BLE na żądanie trwa 12 sekund i pokazuje dostępne nazwy oraz siłę sygnału. Urządzenia bez nadawanej nazwy są oznaczone jako nieznane; lista sparowanych jest widoczna bez skanowania.
+- **Zasilanie i czujniki:** wyświetlane są zmierzone temperatury SMC, obroty wentylatorów i potwierdzone odczyty szyn zasilania. Podsumowanie rozróżnia liczbę temperatur, napięć, mocy i prądów oraz pomija wentylatory, jeśli ich nie ma. macOS nie udostępnia każdego fizycznego czujnika.
+
+#### Poprawki
+
+- Wybór języka systemowego uwzględnia całą listę preferencji, pomija nieobsługiwane języki i chiński tradycyjny. Ręczny wybór pozostaje zachowany; angielski jest językiem zapasowym i bazowym pakietu.
+- Instalowanie i usuwanie akcji szybkiej sprząta wszystkie znane polskie, angielskie i chińskie nazwy workflow. Ponowna instalacja po zmianie języka pozostawia dokładnie jedną akcję.
+- Niedostępny odczyt RSSI Bluetooth nie jest już pokazywany jako mocny sygnał. Odczyt baterii wymaga jednoznacznego dopasowania nazwy produktu.
+- Dekodowanie SMC obsługuje wartości ze znakiem i stałoprzecinkowe; niezrozumiałe klucze oraz docelowe temperatury są pomijane wśród pomiarów.
+- Powielone deskryptory plików nie zawyżają już liczby gniazd.
+
+#### Pobieranie i weryfikacja
+
+- Użyj Vitals-1.2.0.151.zip do rozpakowania lub aktualizacji w aplikacji albo otwórz Vitals-1.2.0.151.dmg i przeciągnij Vitals do Aplikacji.
+- Wszystkie 57 testów regresyjnych przeszło. Sprawdzono pakowanie release, podpisy i opisy uprawnień we wszystkich trzech językach. Przełączanie chiński → angielski → polski → chiński sprawdzono w osobnej kopii aplikacji na macOS.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.1.1.143 — 2026-09-22
 
 ### English

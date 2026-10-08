@@ -66,7 +66,7 @@ CPU, GPU, Neural Engine, SMC, procesy, dyski, sieć, SMART, benchmarki i zdrowie
 | **Panele i pasek menu** | Pływające panele na pulpicie (CPU, pamięć, GPU, temperatura, sieć, dyski, zasilanie) z wykresem na żywo, przeciąganiem i regulowaną przezroczystością. W pasku menu osobna pozycja na metrykę — z wartością, mini wykresem albo obojgiem; lewy przycisk otwiera panel z wykresami i najcięższymi procesami. |
 | **Reszta** | Usługi launchd z akcjami, użytkownicy z procesami, połączenia TCP/UDP pogrupowane według aplikacji i celu (cel można rozwinąć, by zobaczyć gniazda i porty lokalne; dostępny jest też widok gniazd i filtry zdalnych/nasłuchujących/lokalnych), Bluetooth z listą połączonych/sparowanych urządzeń i skanowaniem pobliskich BLE na żądanie, elementy startowe, zainstalowane aplikacje, sterowniki i rozszerzenia jądra, informacje o systemie i sprzęcie. |
 
-Dodatkowo: **polski i angielski przełączane w locie** (bez restartu), **uruchamianie po zalogowaniu** i praca w tle (zamknięcie okna zostawia aplikację w pasku menu, a próbkowanie zwalnia), motywy jasny / ciemny / monochromatyczny fosfor, konfigurowalne kolumny w każdej tabeli, eksport historii pomiarów do CSV.
+Dodatkowo: **polski, angielski i chiński uproszczony przełączane w locie** (bez restartu), **uruchamianie po zalogowaniu** i praca w tle (zamknięcie okna zostawia aplikację w pasku menu, a próbkowanie zwalnia), motywy jasny / ciemny / monochromatyczny fosfor, konfigurowalne kolumny w każdej tabeli, eksport historii pomiarów do CSV.
 
 Zmiany w wydaniach opisuje [changelog](CHANGELOG.md) — najpierw po angielsku, następnie po polsku.
 
