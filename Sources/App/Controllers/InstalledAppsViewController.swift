@@ -242,13 +242,7 @@ final class InstalledAppsViewController: NSViewController, NSSplitViewDelegate, 
         uninstall.isEnabled = a.source != "Apple"; reveal.isEnabled = true
         relatedTitle.stringValue = L("Pliki powiązane (szukanie…)")
         let home = NSHomeDirectory()
-        let candidates = [
-            "\(home)/Library/Application Support/\(a.name)", "\(home)/Library/Application Support/\(a.bundleID)",
-            "\(home)/Library/Caches/\(a.bundleID)", "\(home)/Library/Preferences/\(a.bundleID).plist",
-            "\(home)/Library/Containers/\(a.bundleID)", "\(home)/Library/Logs/\(a.name)", "\(home)/Library/Logs/\(a.bundleID)",
-            "\(home)/Library/Saved Application State/\(a.bundleID).savedState", "\(home)/Library/HTTPStorages/\(a.bundleID)",
-            "\(home)/Library/WebKit/\(a.bundleID)", "\(home)/Library/Cookies/\(a.bundleID).binarycookies",
-        ].filter { !a.bundleID.isEmpty || !$0.contains("//") }
+        let candidates = RelatedAppFiles.candidates(home: home, name: a.name, bundleID: a.bundleID)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var found: [(String, UInt64)] = []
             for c in candidates where FileManager.default.fileExists(atPath: c) {
@@ -289,7 +283,10 @@ final class InstalledAppsViewController: NSViewController, NSSplitViewDelegate, 
         if !rel.isEmpty { alert.showsSuppressionButton = true; alert.suppressionButton?.title = L("Tylko aplikacja, bez plików powiązanych") }
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         var urls = [URL(fileURLWithPath: a.path)]
-        if alert.suppressionButton?.state != .on { urls += rel.map { URL(fileURLWithPath: $0.0) } }
+        if alert.suppressionButton?.state != .on {
+            let allowed = Set(RelatedAppFiles.candidates(home: NSHomeDirectory(), name: a.name, bundleID: a.bundleID))
+            urls += rel.compactMap { allowed.contains($0.0) ? URL(fileURLWithPath: $0.0) : nil }
+        }
         NSWorkspace.shared.recycle(urls) { [weak self] _, error in
             if let error { let e = NSAlert(error: error); e.runModal() }
             self?.lastLoad = .distantPast; self?.reload()
