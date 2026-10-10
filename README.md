@@ -88,6 +88,8 @@ macOS exposes CPU and memory of other users' processes, as well as the CPU / GPU
 
 The bundle ships a daemon called `online.equishow.vitals.helper`. The app first tries `SMAppService` (approval in Login Items); when macOS rejects a daemon signed with a personal team certificate, it falls back to `SMJobBless`: a single authorization installs the helper into `/Library/PrivilegedHelperTools`. Over XPC the helper provides the full process list, power readings (`powermetrics`) and launchd service actions. Enable it in **Settings → Helper and privileges → “Enable helper…”**, disable it with the same button (which removes the plist and the binary).
 
+The helper accepts only the matching signed app running as root or a member of the macOS administrator group. Standard user accounts cannot access the helper even if another administrator installed it. Service and process-priority changes recheck the caller identity on each request.
+
 When a newer Vitals version starts, it automatically checks the active helper and updates an older version. It preserves the installation method (`SMJobBless` or `SMAppService`) and verifies the running version over XPC. macOS may request your password or approval in Login Items again. After cancellation or an error, automatic installation is not retried in the same session; use **“Update helper…”** in Settings to retry. A disabled helper is not automatically installed, and a newer helper is not downgraded.
 
 Building the helper requires an **Apple Development** certificate (a free Apple ID is enough) — the `SMAuthorizedClients` / `SMPrivilegedExecutables` rules are generated from the certificate's OU at build time:

@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import Darwin
+import OpenDirectory
 
 /// Shared state must be accessed inside the lock's scope.
 public final class Locked<Value>: @unchecked Sendable {
@@ -128,5 +129,26 @@ public enum AuthorizationRequest {
                 return AuthorizationCopyRights(auth, &rights, nil, flags, nil)
             }
         }
+    }
+}
+
+/// A trusted application signature is not authorization for every local user.
+public enum HelperAccess {
+    public static func allows(uid: uid_t, administratorMembership: (uid_t) -> Bool = isAdministrator) -> Bool {
+        uid == 0 || administratorMembership(uid)
+    }
+
+    public static func isAdministrator(_ uid: uid_t) -> Bool {
+        do {
+            let node = try ODNode(session: ODSession.default(), type: UInt32(kODNodeTypeLocalNodes))
+            let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers,
+                                    attribute: kODAttributeTypeUniqueID, matchType: UInt32(kODMatchEqualTo),
+                                    queryValues: String(uid), returnAttributes: nil, maximumResults: 1)
+            guard let users = try query.resultsAllowingPartial(false) as? [ODRecord],
+                  users.count == 1 else { return false }
+            let admin = try node.record(withRecordType: kODRecordTypeGroups, name: "admin", attributes: nil)
+            try admin.isMemberRecord(users[0])
+            return true
+        } catch { return false }
     }
 }

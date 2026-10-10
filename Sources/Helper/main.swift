@@ -152,6 +152,8 @@ final class HelperService: NSObject, HelperProtocol {
     func version(reply: @escaping (String) -> Void) { reply(helperVersion) }
 
     func priority(pid: Int32, startTimeMicros: Int64, value: Int32, reply: @escaping (String) -> Void) {
+        guard let caller = NSXPCConnection.current(),
+              HelperAccess.allows(uid: caller.effectiveUserIdentifier) else { reply("Administrator access required."); return }
         guard pid > 1, startTimeMicros > 0, (-20...20).contains(value),
               sc_process_start_time(pid) == startTimeMicros else { reply("Proces zakończył się lub jest chroniony."); return }
         reply(setpriority(PRIO_PROCESS, id_t(pid), value) == 0 ? "" : String(cString: strerror(errno)))
@@ -162,6 +164,7 @@ final class HelperService: NSObject, HelperProtocol {
     func service(action: String, domain: String, label: String, reply: @escaping (String) -> Void) {
         guard let act = ServiceAction(rawValue: action) else { reply("Nieznana operacja"); return }
         guard let caller = NSXPCConnection.current(),
+              HelperAccess.allows(uid: caller.effectiveUserIdentifier),
               ServicePolicy.allows(domain: domain, label: label, callerUID: caller.effectiveUserIdentifier)
         else { reply("Niedozwolona domena lub etykieta"); return }
         DispatchQueue.global(qos: .userInitiated).async {
@@ -174,6 +177,7 @@ final class HelperService: NSObject, HelperProtocol {
 final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
     let service = HelperService()
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
+        guard HelperAccess.allows(uid: newConnection.effectiveUserIdentifier) else { return false }
         newConnection.exportedInterface = NSXPCInterface(with: HelperProtocol.self)
         newConnection.exportedObject = service
         newConnection.resume()
