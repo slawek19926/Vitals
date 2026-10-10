@@ -304,11 +304,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         guard let exe = Bundle.main.executablePath else { return }
         UserDefaults.standard.synchronize()
         if relaunchWithAuthorization(exe: exe, args: prefsArgs) { NSApp.terminate(nil); return }
-        // Instancja administratora ma własne preferencje (w katalogu roota) – kopiujemy bieżące ustawienia użytkownika
-        let plist = NSHomeDirectory() + "/Library/Preferences/" + (Bundle.main.bundleIdentifier ?? "online.equishow.vitals") + ".plist"
-        func esc(_ s: String) -> String { s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") }
-        let shell = "mkdir -p /var/root/Library/Preferences; cp -f \\\"\(esc(plist))\\\" /var/root/Library/Preferences/ 2>/dev/null; \\\"\(esc(exe))\\\" >/dev/null 2>&1 &"
-        let script = "do shell script \"\(shell)\" with administrator privileges"
+        let script = LaunchCommands.administratorRelaunch(executable: exe, arguments: prefsArgs)
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         p.arguments = ["-e", script]

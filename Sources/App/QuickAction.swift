@@ -74,7 +74,7 @@ enum QuickAction {
         try remove(in: services)
         try fm.createDirectory(at: contents, withIntermediateDirectories: true)
         try infoPlist(title: title).write(to: contents.appendingPathComponent("Info.plist"), atomically: true, encoding: .utf8)
-        try workflow.write(to: contents.appendingPathComponent("document.wflow"), atomically: true, encoding: .utf8)
+        try workflow(appPath: Bundle.main.bundlePath).write(to: contents.appendingPathComponent("document.wflow"), atomically: true, encoding: .utf8)
     }
 
     @discardableResult
@@ -113,7 +113,7 @@ enum QuickAction {
         \t<array>
         \t\t<dict>
         \t\t\t<key>NSMenuItem</key>
-        \t\t\t<dict><key>default</key><string>\(title)</string></dict>
+        \t\t\t<dict><key>default</key><string>\(LaunchCommands.xmlText(title))</string></dict>
         \t\t\t<key>NSMessage</key><string>runWorkflowAsService</string>
         \t\t</dict>
         \t</array>
@@ -123,8 +123,8 @@ enum QuickAction {
     }
 
     /// Jedna akcja „Uruchom skrypt powłoki” otwierająca pakiet aplikacji z bieżącej lokalizacji
-    private static var workflow: String {
-        let command = "open -a \"\(Bundle.main.bundlePath)\""
+    static func workflow(appPath: String) -> String {
+        let command = "/usr/bin/open -a " + LaunchCommands.shellArgument(appPath)
         return """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -163,7 +163,7 @@ enum QuickAction {
         \t\t\t\t<key>ActionName</key><string>Run Shell Script</string>
         \t\t\t\t<key>ActionParameters</key>
         \t\t\t\t<dict>
-        \t\t\t\t\t<key>COMMAND_STRING</key><string>\(command)</string>
+        \t\t\t\t\t<key>COMMAND_STRING</key><string>\(LaunchCommands.xmlText(command))</string>
         \t\t\t\t\t<key>CheckedForUserDefaultShell</key><true/>
         \t\t\t\t\t<key>inputMethod</key><integer>0</integer>
         \t\t\t\t\t<key>shell</key><string>/bin/zsh</string>
