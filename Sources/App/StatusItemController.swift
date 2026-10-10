@@ -25,7 +25,7 @@ final class MenuBarModule {
         popover.behavior = .transient
         popover.contentViewController = ModulePopoverController(kind: kind, detailed: Prefs.shared.menuBarDetailed.contains(kind.rawValue))
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.font = Fonts.mono(10.5, weight: .medium)
+        item.button?.font = kind.menuBarFont
         item.button?.imagePosition = .imageLeading
         item.button?.target = target
         item.button?.action = action
@@ -65,7 +65,7 @@ final class MenuBarModule {
         } else {
             // kolor zależny od poziomu: spokojny akcent, ostrzeżenie, wartość krytyczna
             b.attributedTitle = NSAttributedString(string: " " + kind.menuBarText(s), attributes: [
-                .font: Fonts.mono(10.5, weight: .medium),
+                .font: kind.menuBarFont,
                 .foregroundColor: kind.menuBarColor(s),
             ])
         }

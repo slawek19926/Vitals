@@ -68,10 +68,17 @@ enum WidgetKind: String, CaseIterable {
         return P.accent(accent)
     }
 
+    var menuBarFont: NSFont {
+        self == .network ? NSFont.monospacedSystemFont(ofSize: 10.5, weight: .medium)
+            : Fonts.mono(10.5, weight: .medium)
+    }
+
     /// Stała szerokość napisu w pasku menu (znaki są monospace, więc pozycja nie skacze)
     var menuBarWidth: CGFloat {
         switch self {
-        case .network: return 104
+        case .network:
+            return ceil(NSAttributedString(string: " ↓" + String(repeating: "0", count: 11) + " ↑" + String(repeating: "0", count: 11),
+                                           attributes: [.font: menuBarFont]).size().width)
         case .disk, .power: return 62
         default: return 40
         }
@@ -84,7 +91,7 @@ enum WidgetKind: String, CaseIterable {
         case .memory: return pad(Fmt.percent(s.mem.total > 0 ? 100 * Double(s.mem.used) / Double(s.mem.total) : 0, precision: 0), 4)
         case .gpu: return pad(s.gpuUtil.map { Fmt.percent($0, precision: 0) } ?? "—", 4)
         case .temperature: return pad(s.hotspot.map { Fmt.temp($0, precision: 0) } ?? "—", 5)
-        case .network: return "↓" + pad(Fmt.rate(s.net.rxRate), 9) + " ↑" + pad(Fmt.rate(s.net.txRate), 9)
+        case .network: return "↓" + pad(Fmt.rate(s.net.rxRate), 11) + " ↑" + pad(Fmt.rate(s.net.txRate), 11)
         case .disk: return pad(Fmt.rate(s.disk.readRate + s.disk.writeRate), 9)
         case .power: return pad(s.sysWatts.map { Fmt.watts($0) } ?? "—", 6)
         }
