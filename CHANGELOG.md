@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.2.3.154 — 2026-10-12
+
+### English
+
+This release makes the menu bar more compact, adds an optional two-row network display, and keeps graphs inside expanded panels.
+
+#### New and improved
+
+- **One or two network rows:** in Settings → Menu bar → Network value layout, choose a single row or stack download above upload. Existing installations keep the single-row layout by default. Both layouts keep rate positions stable as units change.
+- **Less space in the menu bar:** smaller margins and widths measured from native icons and representative longest readings reduce unused space between CPU, memory, GPU, temperature, network, disk and power items.
+- **Values on the bar, graphs after clicking:** collapsed items always show readings, even when an older version was configured to show a graph on the bar. Graphs are now shown only in the expanded panel.
+- **Expanded panel content:** choose value only, graph only, or value and graph. These options apply to both simple and advanced panels; the default remains value and graph. Panel content updates when settings change, and the selected history range applies to its graph.
+- **Localized settings:** the new controls and explanations are available in Polish, English and Simplified Chinese.
+
+#### Downloads and verification
+
+- Open Vitals-1.2.3.154.dmg and drag Vitals into Applications, or use Vitals-1.2.3.154.zip for extraction or the in-app updater. SHA-256 checksum files are included for both downloads.
+- All 97 regression tests passed, including compact item widths, layout switching, preference compatibility and graph data in expanded panels. The local app was installed and confirmed working on macOS. ZIP and DMG contents, signatures and all three language resources were verified.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie zmniejsza miejsce zajmowane przez pasek menu, dodaje opcjonalny dwuwierszowy układ sieci i przenosi wykresy do rozwiniętych paneli.
+
+#### Nowości i usprawnienia
+
+- **Jeden lub dwa wiersze sieci:** w Ustawienia → Pasek menu → Układ wartości sieci można wybrać jeden wiersz albo pobieranie nad wysyłaniem. Dotychczasowe instalacje domyślnie zachowują jeden wiersz. Oba układy utrzymują stałe pozycje odczytów przy zmianach jednostek.
+- **Mniej miejsca na pasku:** mniejsze marginesy i szerokości wyznaczane z ikon oraz najdłuższych typowych odczytów ograniczają puste odstępy między CPU, pamięcią, GPU, temperaturą, siecią, dyskami i zasilaniem.
+- **Odczyty na pasku, wykresy po kliknięciu:** zwinięte elementy zawsze pokazują wartości, także jeśli w starszej wersji wybrano wykres na pasku. Wykresy są teraz wyłącznie w rozwiniętym panelu.
+- **Zawartość rozwiniętego panelu:** można wybrać tylko wartość, tylko wykres albo wartość i wykres. Opcje dotyczą paneli prostych i zaawansowanych; domyślnie pozostają odczyty z wykresem. Zmiany ustawień odświeżają zawartość panelu, a wybrany zakres czasu obejmuje jego wykres.
+- **Przetłumaczone ustawienia:** nowe kontrolki i objaśnienia są dostępne po polsku, angielsku i chińsku uproszczonym.
+
+#### Pobieranie i weryfikacja
+
+- Otwórz Vitals-1.2.3.154.dmg i przeciągnij Vitals do Aplikacji albo użyj Vitals-1.2.3.154.zip do rozpakowania lub aktualizacji w aplikacji. Dla obu plików dołączono sumy kontrolne SHA-256.
+- Wszystkie 97 testów regresyjnych przeszło, w tym testy szerokości elementów, przełączania układów, zgodności preferencji i danych wykresów w rozwiniętych panelach. Lokalna aplikacja została zainstalowana i potwierdzono jej działanie na macOS. Sprawdzono zawartość ZIP i DMG, podpisy oraz zasoby wszystkich trzech języków.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.2.2.153 — 2026-10-12
 
 ### English
