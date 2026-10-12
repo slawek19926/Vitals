@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.2.2.153 — 2026-10-12
+
+### English
+
+This release improves application removal safety, privileged helper access and command escaping, and stabilizes the network display in the menu bar.
+
+#### Security fixes
+
+- **Safer application removal:** missing or malformed app metadata can no longer select shared Library folders as related files. Paths containing traversal components or symlinks escaping the expected folder are rejected, and related files are checked again before moving them to Trash.
+- **Helper authorization:** the privileged helper accepts only the matching signed app running as root or a member of the macOS administrator group. Standard user accounts cannot use a helper installed by another administrator. Service and process-priority changes recheck the caller's identity for each request.
+- **Command escaping:** administrator relaunch commands and Quick Action workflows now escape shell arguments, AppleScript strings and XML separately. App paths containing quotes, shell substitutions or XML characters remain literal paths.
+
+#### Fixes and improvements
+
+- Administrator relaunch restores the originating user's language, theme and other preferences before the interface initializes, through both launch paths. Preference import checks the user's home, file ownership, type, size and contents, and rejects symlinks.
+- Network download and upload values use a consistent monospaced font and measured fixed width. Switching between B/s, KB/s, MB/s and GB/s no longer shifts the upload column or clips ordinary rate values.
+- All three menu bar modes remain available: value only, graph only, and value with graph. The combined mode retains its network sparkline.
+- The security and width fixes were contributed in [wwu-git/Vitals](https://github.com/wwu-git/Vitals), with additional preference restoration and regression coverage in this release.
+
+#### Downloads and verification
+
+- Open Vitals-1.2.2.153.dmg and drag Vitals into Applications, or use Vitals-1.2.2.153.zip for extraction or the in-app updater. SHA-256 checksum files are included for both downloads.
+- All 90 regression tests passed. Release packaging, ZIP and DMG contents, code signatures, and Polish, English and Simplified Chinese resources were verified.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie poprawia bezpieczeństwo usuwania aplikacji, dostęp do pomocnika uprzywilejowanego i obsługę znaków specjalnych w poleceniach oraz stabilizuje moduł sieci w pasku menu.
+
+#### Poprawki bezpieczeństwa
+
+- **Bezpieczniejsze usuwanie aplikacji:** brakujące lub niepoprawne metadane aplikacji nie mogą już wskazywać wspólnych katalogów Library jako plików powiązanych. Odrzucane są ścieżki wychodzące poza oczekiwany katalog i prowadzące tam dowiązania symboliczne, a pliki powiązane są ponownie sprawdzane przed przeniesieniem do Kosza.
+- **Uprawnienia pomocnika:** pomocnik akceptuje wyłącznie zgodnie podpisaną aplikację uruchomioną jako root lub przez członka grupy administratorów macOS. Zwykłe konta użytkowników nie mogą korzystać z pomocnika zainstalowanego przez innego administratora. Zmiany usług i priorytetów procesów ponownie sprawdzają tożsamość użytkownika przy każdym żądaniu.
+- **Znaki specjalne w poleceniach:** ponowne uruchamianie jako administrator i akcje szybkie osobno zabezpieczają argumenty powłoki, tekst AppleScript i XML. Ścieżki aplikacji zawierające cudzysłowy, podstawienia powłoki lub znaki XML pozostają dosłownymi ścieżkami.
+
+#### Poprawki i usprawnienia
+
+- Ponowne uruchomienie jako administrator przywraca język, motyw i pozostałe preferencje użytkownika przed zbudowaniem interfejsu, niezależnie od użytej metody uruchomienia. Import sprawdza katalog domowy, właściciela, typ, rozmiar i zawartość pliku oraz odrzuca dowiązania symboliczne.
+- Wartości pobierania i wysyłania w pasku menu korzystają ze spójnej czcionki o stałej szerokości znaków i zmierzonej szerokości pola. Zmiana jednostek B/s, KB/s, MB/s i GB/s nie przesuwa kolumny wysyłania ani nie ucina typowych odczytów.
+- Zachowano wszystkie trzy tryby paska menu: tylko wartość, tylko wykres oraz wartość z wykresem. Tryb łączony nadal pokazuje miniwykres sieci.
+- Poprawki bezpieczeństwa i szerokości pochodzą z [wwu-git/Vitals](https://github.com/wwu-git/Vitals); w tym wydaniu uzupełniono je o przywracanie preferencji i testy regresyjne.
+
+#### Pobieranie i weryfikacja
+
+- Otwórz Vitals-1.2.2.153.dmg i przeciągnij Vitals do Aplikacji albo użyj Vitals-1.2.2.153.zip do rozpakowania lub aktualizacji w aplikacji. Dla obu plików dołączono sumy kontrolne SHA-256.
+- Wszystkie 90 testów regresyjnych przeszło. Sprawdzono pakowanie Release, zawartość ZIP i DMG, podpisy oraz zasoby polskie, angielskie i chińskie uproszczone.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.2.1.152 — 2026-10-08
 
 ### English
