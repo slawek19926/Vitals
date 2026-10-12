@@ -113,10 +113,18 @@ final class Prefs {
     }
     /// moduły z rozbudowanym panelem (pełne listy odczytów zamiast skrótu)
     var menuBarDetailed: [String] { get { d.stringArray(forKey: "menuBarDetailed") ?? [] } set { set("menuBarDetailed", newValue) } }
-    /// ile sekund historii mieści mini wykres w pasku menu
+    /// History range in expanded menu bar panels.
     var menuBarSpanSeconds: Double { get { d.object(forKey: "menuBarSpanSeconds") == nil ? 60 : d.double(forKey: "menuBarSpanSeconds") } set { set("menuBarSpanSeconds", newValue) } }
-    /// 0 = wartość, 1 = wykres, 2 = wartość i wykres
-    var menuBarStyle: Int { get { d.object(forKey: "menuBarStyle") == nil ? 2 : d.integer(forKey: "menuBarStyle") } set { set("menuBarStyle", newValue) } }
+    /// Separate from the legacy collapsed-item style so existing panels keep both values and graphs.
+    var menuBarPopoverStyle: ModulePopoverStyle {
+        get { ModulePopoverStyle(rawValue: d.object(forKey: "menuBarPopoverStyle") as? Int ?? 2) ?? .both }
+        set { set("menuBarPopoverStyle", newValue.rawValue) }
+    }
+    /// Network rate layout; existing installations keep the single-row display.
+    var menuBarNetworkLayout: NetworkMenuBarLayout {
+        get { NetworkMenuBarLayout(rawValue: d.integer(forKey: "menuBarNetworkLayout")) ?? .singleRow }
+        set { set("menuBarNetworkLayout", newValue.rawValue) }
+    }
 
     // --- pływające panele na pulpicie
     var widgets: [String] { get { d.stringArray(forKey: "widgets") ?? [] } set { set("widgets", newValue) } }

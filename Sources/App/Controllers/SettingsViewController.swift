@@ -30,6 +30,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     private let hotkeyPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let quickActionButton = NSButton(title: "", target: nil, action: nil)
     private let menuBarStylePopup = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let networkLayoutPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private let menuBarSpanPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     private var menuBarPopups: [WidgetKind: NSPopUpButton] = [:]
     private let backgroundSwitch = NSSwitch()
@@ -160,16 +161,20 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
             menuBarPopups[kind] = popup
             row(bars, kind.title, popup)
         }
-        menuBarStylePopup.addItems(withTitles: MenuBarStyle.allCases.map { $0.title })
-        menuBarStylePopup.selectItem(at: min(prefs.menuBarStyle, MenuBarStyle.allCases.count - 1))
+        menuBarStylePopup.addItems(withTitles: ModulePopoverStyle.allCases.map { $0.title })
+        menuBarStylePopup.selectItem(at: prefs.menuBarPopoverStyle.rawValue)
         menuBarStylePopup.target = self; menuBarStylePopup.action = #selector(menuBarStyleChanged)
         menuBarSpanPopup.addItems(withTitles: ["30 s", "1 min", "2 min", "5 min"])
         menuBarSpanPopup.selectItem(at: [30.0, 60, 120, 300].firstIndex(of: prefs.menuBarSpanSeconds) ?? 1)
         menuBarSpanPopup.target = self; menuBarSpanPopup.action = #selector(menuBarSpanChanged)
-        row(bars, "Zakres czasu mini wykresów", menuBarSpanPopup,
-            hint: "Ile historii mieści wykres przy pozycji w pasku menu.")
-        row(bars, "Wygląd pozycji", menuBarStylePopup,
-            hint: "Wartość, mini wykres albo oba naraz w samym pasku. Prosty panel pokazuje skrót metryki, zaawansowany pełne listy odczytów (rdzenie, czujniki, klucze SMC, interfejsy).")
+        row(bars, "settings.menu_bar.panel_span", menuBarSpanPopup,
+            hint: "settings.menu_bar.panel_span_hint")
+        row(bars, "settings.menu_bar.panel_content", menuBarStylePopup,
+            hint: "settings.menu_bar.panel_content_hint")
+        networkLayoutPopup.addItems(withTitles: NetworkMenuBarLayout.allCases.map { $0.title })
+        networkLayoutPopup.selectItem(at: prefs.menuBarNetworkLayout.rawValue)
+        networkLayoutPopup.target = self; networkLayoutPopup.action = #selector(networkLayoutChanged)
+        row(bars, "settings.network_layout.label", networkLayoutPopup, hint: "settings.network_layout.hint")
         statusSwitch.state = prefs.showStatusBar ? .on : .off
         statusSwitch.target = self; statusSwitch.action = #selector(statusChanged)
         row(bars, "Pokaż pasek stanu", statusSwitch)
@@ -458,8 +463,11 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
     }
 
     @objc private func menuBarStyleChanged() {
-        prefs.menuBarStyle = menuBarStylePopup.indexOfSelectedItem
-        NotificationCenter.default.post(name: .prefsChanged, object: nil)
+        prefs.menuBarPopoverStyle = ModulePopoverStyle(rawValue: menuBarStylePopup.indexOfSelectedItem) ?? .both
+    }
+
+    @objc private func networkLayoutChanged() {
+        prefs.menuBarNetworkLayout = NetworkMenuBarLayout(rawValue: networkLayoutPopup.indexOfSelectedItem) ?? .singleRow
     }
 
     @objc private func widgetToggled(_ sender: NSSwitch) {

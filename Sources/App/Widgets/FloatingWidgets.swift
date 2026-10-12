@@ -73,15 +73,19 @@ enum WidgetKind: String, CaseIterable {
             : Fonts.mono(10.5, weight: .medium)
     }
 
-    /// Stała szerokość napisu w pasku menu (znaki są monospace, więc pozycja nie skacze)
-    var menuBarWidth: CGFloat {
+    /// Representative longest values keep each item's width stable as readings change.
+    var menuBarSizingText: String {
         switch self {
-        case .network:
-            return ceil(NSAttributedString(string: " ↓" + String(repeating: "0", count: 11) + " ↑" + String(repeating: "0", count: 11),
-                                           attributes: [.font: menuBarFont]).size().width)
-        case .disk, .power: return 62
-        default: return 40
+        case .cpu, .memory, .gpu: return "100%"
+        case .temperature: return "999 °F"
+        case .network: return "↓" + String(repeating: "0", count: 11) + " ↑" + String(repeating: "0", count: 11)
+        case .disk: return "999.9 PB/s"
+        case .power: return "999.9 W"
         }
+    }
+
+    var menuBarWidth: CGFloat {
+        ceil(NSAttributedString(string: menuBarSizingText, attributes: [.font: menuBarFont]).size().width)
     }
 
     /// Krótki napis mieszczący się w pasku menu

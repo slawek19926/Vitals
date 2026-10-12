@@ -1326,3 +1326,11 @@ ui.zombie_processes,Zombie processes,Procesy zombie,僵尸进程,Procesy zombie
 ui.zoom,Zoom,Powiększ,缩放,Powiększ
 ui.zoom_in_scroll_or_pinch,Zoom in (⌘ + scroll or pinch),Powiększ mapę (⌘ + scroll lub gest szczypania),放大（⌘ + 滚动或双指缩放）,Powiększ mapę (⌘ + scroll lub gest szczypania)
 ui.zoom_out,Zoom out,Pomniejsz mapę,缩小,Pomniejsz mapę
+settings.network_layout.single_row,One row,Jeden wiersz,单行,
+settings.network_layout.two_rows,Two rows,Dwa wiersze,双行,
+settings.network_layout.label,Network value layout,Układ wartości sieci,网络数值布局,
+settings.network_layout.hint,Applies to download and upload values in the menu bar. Graphs appear only in the expanded panel.,Dotyczy wartości pobierania i wysyłania w pasku menu. Wykresy są dopiero w rozwiniętym panelu.,用于菜单栏中的下载和上传数值。图表仅显示在展开的面板中。,
+settings.menu_bar.panel_content,Expanded panel content,Zawartość rozwiniętego panelu,展开面板的内容,
+settings.menu_bar.panel_content_hint,"The menu bar always shows values. After clicking an item, its panel can show values, a graph or both. Simple panels show a summary; advanced panels show detailed readings.","Pasek menu zawsze pokazuje wartości. Po kliknięciu panel może pokazywać odczyty, wykres albo oba naraz. Prosty panel pokazuje skrót, zaawansowany szczegółowe odczyty.",菜单栏始终显示数值。点击项目后，面板可显示数值、图表或两者。简洁面板显示概要，高级面板显示详细读数。,
+settings.menu_bar.panel_span,Panel graph time range,Zakres czasu wykresów panelu,面板图表的时间范围,
+settings.menu_bar.panel_span_hint,How much history is shown in the expanded panel graph.,Ile historii pokazuje wykres po rozwinięciu panelu.,展开面板的图表显示的历史时长。,

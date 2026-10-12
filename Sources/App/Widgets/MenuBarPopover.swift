@@ -11,6 +11,7 @@ final class ModulePopoverController: NSViewController {
     private let value = FlashLabel("—", size: 20, weight: .semibold, mono: true)
     private let caption = Label.make("", size: 11, dim: true)
     private let graph: GraphView
+    private var numericViews: [NSView] = []
     private var rows: [(key: String, label: FlashLabel)] = []
     private let listTitle = Label.make("", size: 10.5, weight: .semibold, dim: true)
     private let listRows: [(name: FlashLabel, value: FlashLabel)] = (0..<5).map { _ in
@@ -63,6 +64,7 @@ final class ModulePopoverController: NSViewController {
         }
 
         let head = hstack([Label.make(kind.title, size: 12, weight: .semibold), spacer(), value], spacing: 8)
+        numericViews = [value, caption]
 
         var kvViews: [NSView] = []
         for k in keys {
@@ -98,11 +100,14 @@ final class ModulePopoverController: NSViewController {
             scroll.heightAnchor.constraint(equalToConstant: 420).isActive = true
             scrollView = scroll
             content.append(scroll)
+            numericViews.append(scroll)
         } else {
             content += [kv, listTitle, list]
+            numericViews += [kv, listTitle, list]
         }
         content.append(hstack([open, settings, spacer(), quit], spacing: 8))
         let stack = vstack(content, spacing: 8)
+        stack.detachesHiddenViews = true
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -116,13 +121,32 @@ final class ModulePopoverController: NSViewController {
         if let scrollView { scrollView.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true }
 
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applyPresentation), name: .prefsChanged, object: nil)
+        applyPresentation()
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        applyPresentation()
+        snapshot(Notification(name: .snapshotUpdated, object: Monitor.shared.latest))
+    }
+
+    @objc private func applyPresentation() {
+        guard isViewLoaded else { return }
+        let style = Prefs.shared.menuBarPopoverStyle
+        graph.isHidden = style == .valueOnly
+        graph.timeSpan = Prefs.shared.menuBarSpanSeconds
+        for numberView in numericViews { numberView.isHidden = style == .graphOnly }
+        view.layoutSubtreeIfNeeded()
+        preferredContentSize = view.fittingSize
+    }
+
     @objc private func snapshot(_ n: Notification) {
         guard let s = n.object as? Snapshot, view.window?.isVisible == true else { return }
-        graph.push(kind.values(s))
+        if !graph.isHidden { graph.push(kind.values(s)) }
+        guard Prefs.shared.menuBarPopoverStyle != .graphOnly else { return }
         value.update(kind.headline(s), flash: false)
         caption.stringValue = kind.caption(s)
         if detailed {

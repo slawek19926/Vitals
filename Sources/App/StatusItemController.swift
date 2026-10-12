@@ -1,21 +1,53 @@
-// StatusItemController.swift - moduły w pasku menu: osobna pozycja na metrykę, każda z wartością i mini wykresem
+// StatusItemController.swift - odczyty w pasku menu, wykresy w rozwijanych panelach
 import AppKit
 
-/// Sposób pokazywania modułu w pasku menu
-enum MenuBarStyle: Int, CaseIterable {
+/// Presentation of the expanded panel; collapsed items always show values.
+enum ModulePopoverStyle: Int, CaseIterable {
     case valueOnly = 0, graphOnly = 1, both = 2
     var title: String { L(["Tylko wartość", "Tylko wykres", "Wartość i wykres"][rawValue]) }
+}
+
+enum NetworkMenuBarLayout: Int, CaseIterable {
+    case singleRow = 0, twoRows = 1
+    var title: String { L(self == .singleRow ? "settings.network_layout.single_row" : "settings.network_layout.two_rows") }
+}
+
+/// Two fixed-width rate rows that follow the menu bar's native appearance.
+enum NetworkMenuBarDisplay {
+    static let font = NSFont.monospacedSystemFont(ofSize: 9, weight: .medium)
+    static var rowHeight: CGFloat { ceil(NSAttributedString(string: "0", attributes: [.font: font]).size().height) }
+    static var size: NSSize {
+        NSSize(width: ceil(NSAttributedString(string: "↓ 1023.9 TB/s", attributes: [.font: font]).size().width) + 4,
+               height: rowHeight * 2)
+    }
+    static func rows(download: Double, upload: Double) -> [String] {
+        ["↓ " + Fmt.rate(download), "↑ " + Fmt.rate(upload)]
+    }
+
+    static func image(download: Double, upload: Double) -> NSImage {
+        let lines = rows(download: download, upload: upload)
+        let image = NSImage(size: size, flipped: false) { rect in
+            let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
+            for (index, line) in lines.enumerated() {
+                let arrow = NSAttributedString(string: String(line.prefix(1)), attributes: attributes)
+                let value = NSAttributedString(string: String(line.dropFirst(2)), attributes: attributes)
+                let y = CGFloat(1 - index) * rowHeight
+                arrow.draw(at: NSPoint(x: 0, y: y))
+                value.draw(at: NSPoint(x: rect.width - value.size().width, y: y))
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = lines.joined(separator: ", ")
+        return image
+    }
 }
 
 /// Pojedyncza pozycja w pasku menu odpowiadająca jednej metryce
 final class MenuBarModule {
     let kind: WidgetKind
     let item: NSStatusItem
-    /// Kolumny wykresu: każda obejmuje wycinek czasu, dzięki czemu okno nie zależy od kroku próbkowania
-    private var buckets: [Double] = []
-    private var bucketPeak: Double = 0
-    private var bucketStart = Date()
-    private let bucketCount = 40
+    static let horizontalPadding: CGFloat = 4
 
     /// Panel otwierany kliknięciem tej pozycji – jeden na moduł
     let popover = NSPopover()
@@ -27,6 +59,7 @@ final class MenuBarModule {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.font = kind.menuBarFont
         item.button?.imagePosition = .imageLeading
+        item.button?.imageHugsTitle = true
         item.button?.target = target
         item.button?.action = action
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -44,45 +77,43 @@ final class MenuBarModule {
 
     /// Szerokość pozycji jest stała – inaczej zmiana liczby przesuwałaby cały pasek
     func applyLength() {
-        let style = MenuBarStyle(rawValue: Prefs.shared.menuBarStyle) ?? .both
-        let text = kind.menuBarWidth
-        switch style {
-        case .valueOnly: item.length = text + 22
-        case .graphOnly: item.length = 42
-        case .both: item.length = text + 44
+        let twoRows = kind == .network && Prefs.shared.menuBarNetworkLayout == .twoRows
+        // Measure the native cell with its longest title rather than reserving oversized slots.
+        guard let cell = item.button?.cell?.copy() as? NSButtonCell else {
+            item.length = twoRows ? NetworkMenuBarDisplay.size.width + Self.horizontalPadding
+                : kind.menuBarWidth + (symbolImage()?.size.width ?? 14) + 8
+            return
         }
+        cell.imagePosition = twoRows ? .imageOnly : .imageLeading
+        cell.attributedTitle = NSAttributedString(string: twoRows ? "" : kind.menuBarSizingText,
+                                                  attributes: [.font: kind.menuBarFont])
+        cell.image = twoRows ? NetworkMenuBarDisplay.image(download: 0, upload: 0) : symbolImage()
+        item.length = ceil(cell.cellSize.width) + Self.horizontalPadding
     }
 
     func remove() { NSStatusBar.system.removeStatusItem(item) }
 
     func update(_ s: Snapshot) {
         guard let b = item.button else { return }
-        let style = MenuBarStyle(rawValue: Prefs.shared.menuBarStyle) ?? .both
-        pushSample(kind.menuBarValue(s))
-
-        if style == .graphOnly {
-            b.attributedTitle = NSAttributedString(string: "")
-        } else {
-            // kolor zależny od poziomu: spokojny akcent, ostrzeżenie, wartość krytyczna
-            b.attributedTitle = NSAttributedString(string: " " + kind.menuBarText(s), attributes: [
-                .font: kind.menuBarFont,
-                .foregroundColor: kind.menuBarColor(s),
-            ])
+        if kind == .network {
+            b.toolTip = kind.title + ": " + NetworkMenuBarDisplay.rows(download: s.net.rxRate, upload: s.net.txRate).joined(separator: ", ")
+            if Prefs.shared.menuBarNetworkLayout == .twoRows {
+                b.attributedTitle = NSAttributedString(string: "")
+                b.imagePosition = .imageOnly
+                b.image = NetworkMenuBarDisplay.image(download: s.net.rxRate, upload: s.net.txRate)
+                return
+            }
         }
-        b.alignment = .left
-        b.image = style == .valueOnly ? symbolImage() : sparkline()
-        b.imageHugsTitle = true
-    }
+        b.imagePosition = .imageLeading
 
-    /// Zbiera pomiary w kolumnach o stałym czasie trwania (okno z ustawień / liczba kolumn)
-    private func pushSample(_ v: Double) {
-        bucketPeak = max(bucketPeak, v)
-        let slice = max(0.2, Prefs.shared.menuBarSpanSeconds / Double(bucketCount))
-        guard Date().timeIntervalSince(bucketStart) >= slice else { return }
-        buckets.append(bucketPeak)
-        if buckets.count > bucketCount { buckets.removeFirst(buckets.count - bucketCount) }
-        bucketPeak = v
-        bucketStart = Date()
+        // kolor zależny od poziomu: spokojny akcent, ostrzeżenie, wartość krytyczna
+        b.attributedTitle = NSAttributedString(string: kind.menuBarText(s), attributes: [
+            .font: kind.menuBarFont,
+            .foregroundColor: kind.menuBarColor(s),
+        ])
+        b.alignment = .left
+        b.image = symbolImage()
+        b.imageHugsTitle = true
     }
 
     /// Ikona modułu, gdy wykres jest wyłączony
@@ -92,39 +123,6 @@ final class MenuBarModule {
         return img
     }
 
-    /// Mini wykres rysowany w kolorze podsystemu, wysokość dopasowana do paska menu
-    private func sparkline() -> NSImage {
-        let size = NSSize(width: 34, height: 16)
-        let img = NSImage(size: size)
-        // ostatnia, jeszcze zbierana kolumna dorysowana na końcu – wykres zawsze dochodzi do prawej krawędzi
-        let points = buckets + [bucketPeak]
-        guard points.count > 1 else { return img }
-        let maxV = kind.isPercent ? 100 : max(points.max() ?? 1, 1)
-        img.lockFocus()
-        let color = P.accent(kind.accent)
-        let path = NSBezierPath()
-        let stepX = size.width / CGFloat(max(1, bucketCount))
-        // rysujemy od prawej: najnowsza kolumna na krawędzi, starsze w lewo
-        let firstX = size.width - CGFloat(points.count - 1) * stepX
-        for (i, v) in points.enumerated() {
-            let x = firstX + CGFloat(i) * stepX
-            let y = 1 + CGFloat(min(1, max(0, v / maxV))) * (size.height - 3)
-            if i == 0 { path.move(to: NSPoint(x: x, y: y)) } else { path.line(to: NSPoint(x: x, y: y)) }
-        }
-        // wypełnienie pod linią, żeby wykres był czytelny przy 16 punktach wysokości
-        let fill = path.copy() as! NSBezierPath
-        fill.line(to: NSPoint(x: size.width, y: 0))
-        fill.line(to: NSPoint(x: max(0, firstX), y: 0))
-        fill.close()
-        color.withAlphaComponent(0.25).setFill()
-        fill.fill()
-        color.setStroke()
-        path.lineWidth = 1.2
-        path.stroke()
-        img.unlockFocus()
-        img.isTemplate = false
-        return img
-    }
 }
 
 final class StatusItemController: NSObject {
@@ -162,7 +160,10 @@ final class StatusItemController: NSObject {
         for kind in wanted.reversed() where modules[kind] == nil {
             modules[kind] = MenuBarModule(kind: kind, target: self, action: #selector(buttonClicked(_:)))
         }
-        for m in modules.values { m.applyLength(); m.applyDetailMode() }
+        for m in modules.values {
+            m.applyLength(); m.applyDetailMode()
+            m.update(Monitor.shared.latest)
+        }
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
