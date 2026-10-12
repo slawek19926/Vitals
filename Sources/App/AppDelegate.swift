@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var statusItem: StatusItemController!
 
     static func main() {
+        ElevatedPreferences.restore()
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate
@@ -279,8 +280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     private var prefsArgs: [String] {
-        let plist = NSHomeDirectory() + "/Library/Preferences/" + (Bundle.main.bundleIdentifier ?? "online.equishow.vitals") + ".plist"
-        return ["-userPrefs", plist, "-userUID", "\(getuid())"]
+        ElevatedPreferences.arguments()
     }
 
     /// Próba przez Authorization Services: systemowy dialog uprawnień (może zaoferować Touch ID); zwraca true gdy uruchomiono
