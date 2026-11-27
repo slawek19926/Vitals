@@ -125,8 +125,8 @@ final class SystemInfoViewController: NSViewController, NSTableViewDataSource, N
 
         let divider = ThemedView(); divider.size(width: 1)
         divider.layer?.backgroundColor = P.border.alpha(0.6).cgColor
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
-            divider.layer?.backgroundColor = P.border.alpha(0.6).cgColor
+        observers.observe(.themeChanged) { [weak self, weak divider] _ in
+            divider?.layer?.backgroundColor = P.border.alpha(0.6).cgColor
             self?.list.reloadData(); self?.outline.reloadData(); self?.applyHeaderTheme()
         }
 
@@ -140,6 +140,7 @@ final class SystemInfoViewController: NSViewController, NSTableViewDataSource, N
         list.selectRowIndexes(IndexSet(integer: 1), byExtendingSelection: false)
         select(0)
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() {}
 

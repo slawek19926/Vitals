@@ -127,11 +127,12 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
         for v in [title, summary, scroll] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 10, right: 18))
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.outline.reloadData()
             self?.update(Monitor.shared.latest)
         }
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { update(Monitor.shared.latest) }
 

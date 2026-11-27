@@ -77,11 +77,12 @@ final class HealthViewController: NSViewController, NSTableViewDataSource, NSTab
         scroll.setContentHuggingPriority(.init(1), for: .vertical)
 
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
-        NotificationCenter.default.addObserver(forName: .alertsChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.alertsChanged) { [weak self] _ in
             self?.eventTable.reloadData()
         }
         AlertCenter.shared.requestAuthorizationIfNeeded()
     }
+    private let observers = ObserverBag()
 
     private let eventTable = NSTableView()
 

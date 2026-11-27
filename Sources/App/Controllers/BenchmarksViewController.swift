@@ -340,10 +340,11 @@ final class BenchmarksViewController: NSViewController, NSTableViewDataSource, N
 
         loadSelection()
         loadHistory()
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.historyTable.reloadData(); self?.testTable.reloadData()
         }
     }
+    private let observers = ObserverBag()
 
     private var totalTiles: TileStat?
 

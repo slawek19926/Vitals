@@ -118,9 +118,10 @@ final class GraphView: ThemedView {
         }
         updateFonts()
         applyTheme()
-        NotificationCenter.default.addObserver(forName: .prefsChanged, object: nil, queue: .main) { [weak self] _ in self?.applyTheme() }
+        observers.observe(.prefsChanged) { [weak self] _ in self?.applyTheme() }
         GraphTicker.shared.register(self)
     }
+    private let observers = ObserverBag()
 
     /// Klatka animacji: przesunięcie proporcjonalne do czasu od ostatniej próbki
     fileprivate func frame(now: CFTimeInterval) {

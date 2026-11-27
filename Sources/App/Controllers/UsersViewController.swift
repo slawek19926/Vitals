@@ -159,11 +159,12 @@ final class UsersViewController: NSViewController, NSOutlineViewDataSource, NSOu
 
         cores = Double(max(1, Monitor.shared.hardware.ncpu))
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.outline.reloadData(); self?.updateDetails()
         }
         updateDetails()
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() {
         if Date().timeIntervalSince(lastLoad) > 120 { reload() } else { apply(Monitor.shared.latest) }

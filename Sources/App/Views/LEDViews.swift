@@ -145,8 +145,9 @@ final class MeterView: NSStackView {
         addArrangedSubview(bar)
         addArrangedSubview(valueLabel)
         applyColors()
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in self?.applyColors() }
+        observers.observe(.themeChanged) { [weak self] _ in self?.applyColors() }
     }
+    private let observers = ObserverBag()
     required init?(coder: NSCoder) { fatalError() }
 
     private func applyColors() {

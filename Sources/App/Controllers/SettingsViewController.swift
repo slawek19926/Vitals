@@ -341,7 +341,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
         catTable.reloadData()
         catTable.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
         showCategory(0)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.themePopup.selectItem(at: ThemeManager.shared.appTheme.rawValue)
             self?.displayPopup.selectItem(at: ThemeManager.shared.display.rawValue)
         }
@@ -349,6 +349,7 @@ final class SettingsViewController: NSViewController, NSTableViewDataSource, NST
             self?.refreshHelperStatus()
         }
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { refreshHelperStatus(); HelperClient.shared.fetchVersion() }
 

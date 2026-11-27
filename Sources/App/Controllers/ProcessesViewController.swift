@@ -189,16 +189,17 @@ final class ProcessesViewController: NSViewController, NSOutlineViewDataSource, 
         outline.menu = menu
 
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
-        NotificationCenter.default.addObserver(forName: .applySearchFilter, object: nil, queue: .main) { [weak self] n in
+        observers.observe(.applySearchFilter) { [weak self] n in
             guard let text = n.object as? String else { return }
             self?.search.stringValue = text
             self?.rebuild(force: true)
         }
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.outline.reloadData(); self?.updateDetails()
         }
         updateDetails()
     }
+    private let observers = ObserverBag()
 
     private func setupOutline() {
         let cols: [(String, String, CGFloat)] = [

@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     /// okno główne dla skrótu globalnego
     var mainWindow: NSWindow? { windowController?.window }
     private var statusItem: StatusItemController!
+    private let observers = ObserverBag()
 
     static func main() {
         ElevatedPreferences.restore()
@@ -32,16 +33,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: NSWindow.didBecomeKeyNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowVisibilityChanged), name: .widgetsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(rebuildForLanguage), name: .languageChanged, object: nil)
-        NotificationCenter.default.addObserver(forName: .recordingFailed, object: nil, queue: .main) { note in
+        observers.observe(.recordingFailed) { note in
             let alert = NSAlert(); alert.messageText = L("Nagrywanie pomiarów zostało przerwane")
             alert.informativeText = note.object as? String ?? ""; alert.runModal()
         }
-        NotificationCenter.default.addObserver(forName: .helperUpdateFailed, object: nil, queue: .main) { note in
+        observers.observe(.helperUpdateFailed) { note in
             let alert = NSAlert(); alert.messageText = L("Nie udało się zaktualizować pomocnika")
             alert.informativeText = (note.object as? Error)?.localizedDescription ?? ""
             alert.alertStyle = .warning; alert.runModal()
         }
-        NotificationCenter.default.addObserver(forName: .helperApprovalRequired, object: nil, queue: .main) { _ in
+        observers.observe(.helperApprovalRequired) { _ in
             let alert = NSAlert(); alert.messageText = L("Pomocnik wymaga zatwierdzenia")
             alert.informativeText = L("wymaga zatwierdzenia w Ustawieniach systemowych → Ogólne → Elementy logowania i rozszerzenia")
             alert.addButton(withTitle: L("Otwórz Elementy logowania…"))

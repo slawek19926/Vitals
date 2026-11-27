@@ -469,9 +469,10 @@ final class DiskSpaceViewController: NSViewController, PageRefreshable {
         treemap.onZoomChange = { [weak self] z in self?.updateZoomUI(z) }
         updateZoomUI(1)
         treemap.onSelect = { [weak self] n in self?.hoverLabel.stringValue = n.map { "\($0.name) · \(Fmt.bytes($0.size))" } ?? "" }
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in self?.treemap.needsDisplay = true; self?.refreshPanels() }
+        observers.observe(.themeChanged) { [weak self] _ in self?.treemap.needsDisplay = true; self?.refreshPanels() }
         reloadVolumes()
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { reloadVolumes() }
 

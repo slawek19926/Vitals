@@ -70,8 +70,9 @@ final class StartupViewController: NSViewController, NSTableViewDataSource, NSTa
         let root = vstack([title, scroll, details], spacing: 8)
         for v in [title, scroll, details] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 10, right: 18))
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in self?.table.reloadData() }
+        observers.observe(.themeChanged) { [weak self] _ in self?.table.reloadData() }
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { if Date().timeIntervalSince(lastLoad) > 30 { reload() } }
 

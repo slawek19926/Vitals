@@ -200,7 +200,7 @@ final class SummaryViewController: NSViewController, NSTableViewDataSource, NSTa
             tiles.heightAnchor.constraint(equalToConstant: 98),
         ])
 
-        NotificationCenter.default.addObserver(forName: .prefsChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.prefsChanged) { [weak self] _ in
             let span = Double(Prefs.shared.graphSpanSeconds)
             self?.cpuGraph.timeSpan = span
             self?.memGraph.timeSpan = span
@@ -209,12 +209,13 @@ final class SummaryViewController: NSViewController, NSTableViewDataSource, NSTa
         NotificationCenter.default.addObserver(self, selector: #selector(themeChanged), name: .themeChanged, object: nil)
         themeChanged()
     }
+    private let observers = ObserverBag()
 
     private func legendDot(_ s: Subsystem?) -> NSView {
         let d = ThemedView(); d.layer?.cornerRadius = 3; d.size(width: 10, height: 10)
-        let apply = { d.layer?.backgroundColor = (s.map { P.accent($0) } ?? P.cpuKernel).cgColor }
-        apply()
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { _ in apply() }
+        let apply: (NSView?) -> Void = { $0?.layer?.backgroundColor = (s.map { P.accent($0) } ?? P.cpuKernel).cgColor }
+        apply(d)
+        observers.observe(.themeChanged) { [weak d] _ in apply(d) }
         return d
     }
 

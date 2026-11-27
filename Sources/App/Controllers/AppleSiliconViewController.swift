@@ -113,10 +113,11 @@ final class AppleSiliconViewController: NSViewController, PageRefreshable {
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 0, right: 18))
         NotificationCenter.default.addObserver(self, selector: #selector(snapshot(_:)), name: .snapshotUpdated, object: nil)
         let brand = hw.cpuBrand
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { _ in
-            chip.attributedStringValue = NSAttributedString(string: brand, attributes: [.font: Fonts.title(24), .kern: 1.0, .foregroundColor: P.text])
+        observers.observe(.themeChanged) { [weak chip] _ in
+            chip?.attributedStringValue = NSAttributedString(string: brand, attributes: [.font: Fonts.title(24), .kern: 1.0, .foregroundColor: P.text])
         }
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() {}
 

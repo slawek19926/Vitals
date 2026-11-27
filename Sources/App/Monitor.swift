@@ -307,7 +307,7 @@ struct Snapshot {
         case .nominal: return L("nominalna")
         case .fair: return L("podwyższona")
         case .serious: return L("poważna")
-        case .critical: return "krytyczna"
+        case .critical: return L("krytyczna")
         @unknown default: return L("nieznana")
         }
     }

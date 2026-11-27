@@ -121,12 +121,13 @@ final class InstalledAppsViewController: NSViewController, NSSplitViewDelegate, 
         let root = vstack([title, body], spacing: 6)
         for v in [title, body] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 0, right: 18))
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
-            self?.table.reloadData(); divider.layer?.backgroundColor = P.border.alpha(0.6).cgColor; self?.dName.textColor = P.text
+        observers.observe(.themeChanged) { [weak self, weak divider] _ in
+            self?.table.reloadData(); divider?.layer?.backgroundColor = P.border.alpha(0.6).cgColor; self?.dName.textColor = P.text
         }
         dName.textColor = P.text
         showDetails(nil)
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { if Date().timeIntervalSince(lastLoad) > 300 { reload() } }
 

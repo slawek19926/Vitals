@@ -142,12 +142,13 @@ final class DriversViewController: NSViewController, NSTableViewDataSource, NSTa
         for v in [title, tileRow, filterRow, body] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 10, right: 18))
 
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
-            divider.layer?.backgroundColor = P.border.alpha(0.6).cgColor
+        observers.observe(.themeChanged) { [weak self, weak divider] _ in
+            divider?.layer?.backgroundColor = P.border.alpha(0.6).cgColor
             self?.table.reloadData(); self?.showDetails(self?.selected)
         }
         showDetails(nil)
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() { if Date().timeIntervalSince(lastLoad) > 120 { reload() } }
 

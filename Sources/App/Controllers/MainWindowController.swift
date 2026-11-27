@@ -2,33 +2,46 @@
 import AppKit
 
 final class ContentViewController: NSViewController {
-    let summary = SummaryViewController()
-    let performance = PerformanceViewController()
-    let processes = ProcessesViewController()
-    let systemInfo = SystemInfoViewController()
-    let services = ServicesViewController()
-    let users = UsersViewController()
-    let powerFreq = PowerFreqViewController()
-    let appleSilicon = AppleSiliconViewController()
-    let connections = ConnectionsViewController()
-    let startup = StartupViewController()
-    let installed = InstalledAppsViewController()
-    let drivers = DriversViewController()
-    let diskSpace = DiskSpaceViewController()
-    let benchmarks = BenchmarksViewController()
-    let bluetooth = BluetoothViewController()
-    let health = HealthViewController()
-    let overview = SystemOverviewViewController()
-    let settings = SettingsViewController()
-    lazy var pages: [NSViewController] = [summary, performance, processes, systemInfo, services, users, powerFreq, appleSilicon, connections, startup, installed, drivers, diskSpace, benchmarks, bluetooth, health, overview, settings]
+    private let pageFactories: [() -> NSViewController] = [
+        { SummaryViewController() },
+        { PerformanceViewController() },
+        { ProcessesViewController() },
+        { SystemInfoViewController() },
+        { ServicesViewController() },
+        { UsersViewController() },
+        { PowerFreqViewController() },
+        { AppleSiliconViewController() },
+        { ConnectionsViewController() },
+        { StartupViewController() },
+        { InstalledAppsViewController() },
+        { DriversViewController() },
+        { DiskSpaceViewController() },
+        { BenchmarksViewController() },
+        { BluetoothViewController() },
+        { HealthViewController() },
+        { SystemOverviewViewController() },
+        { SettingsViewController() },
+    ]
+    private lazy var loadedPages: [NSViewController?] = Array(repeating: nil, count: pageFactories.count)
+    var processes: ProcessesViewController { page(at: 2) as! ProcessesViewController }
+    var systemInfo: SystemInfoViewController { page(at: 3) as! SystemInfoViewController }
     /// Indeks strony ustawień – wyliczany, żeby dodanie nowej strony nie rozjeżdżało menu i przycisku
-    var settingsPage: Int { pages.count - 1 }
+    var settingsPage: Int { pageFactories.count - 1 }
     private let container = NSView()
     private let topSeparator = NSView()
     private let topBar = NSView()
     private let status = StatusBarView()
     private var statusHeight: NSLayoutConstraint!
     private(set) var current = -1
+    private let observers = ObserverBag()
+
+    private func page(at index: Int) -> NSViewController {
+        if let existing = loadedPages[index] { return existing }
+        let vc = pageFactories[index]()
+        loadedPages[index] = vc
+        addChild(vc)
+        return vc
+    }
 
     override func loadView() {
         let root = ThemedView()
@@ -66,13 +79,12 @@ final class ContentViewController: NSViewController {
             status.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             statusHeight,
         ])
-        for p in pages { addChild(p) }
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.view.layer?.backgroundColor = P.windowBg.cgColor
             self?.applyBarColors()
         }
         applyBarColors()
-        NotificationCenter.default.addObserver(forName: .prefsChanged, object: nil, queue: .main) { [weak self] _ in self?.applyPrefs() }
+        observers.observe(.prefsChanged) { [weak self] _ in self?.applyPrefs() }
         applyPrefs()
     }
 
@@ -90,12 +102,13 @@ final class ContentViewController: NSViewController {
     }
 
     func show(_ index: Int) {
-        guard index != current, index >= 0, index < pages.count else { return }
+        guard index != current, index >= 0, index < pageFactories.count else { return }
+        let vc = page(at: index)
         container.subviews.forEach { $0.removeFromSuperview() }
-        pages[index].view.pin(to: container)
+        vc.view.pin(to: container)
         current = index
         if index < settingsPage { UserDefaults.standard.set(index, forKey: "page") }
-        (pages[index] as? PageRefreshable)?.pageDidAppear()
+        (vc as? PageRefreshable)?.pageDidAppear()
     }
 }
 
@@ -104,6 +117,7 @@ protocol PageRefreshable: AnyObject { func pageDidAppear() }
 final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate {
     let sidebar = SidebarViewController()
     let content = ContentViewController()
+    private let observers = ObserverBag()
 
     init() {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1240, height: 800),
@@ -150,10 +164,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         }
         let page = Prefs.shared.rememberPage ? UserDefaults.standard.integer(forKey: "page") : Prefs.shared.startPage
         selectPage(page)
-        NotificationCenter.default.addObserver(forName: .openPage, object: nil, queue: .main) { [weak self] n in
+        observers.observe(.openPage) { [weak self] n in
             if let i = n.object as? Int { self?.selectPage(i) }
         }
-        NotificationCenter.default.addObserver(forName: .openSystemInfoCategory, object: nil, queue: .main) { [weak self] n in
+        observers.observe(.openSystemInfoCategory) { [weak self] n in
             self?.selectPage(3)
             if let t = n.object as? String { self?.content.systemInfo.select(type: t) }
         }
@@ -178,7 +192,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         w.titleVisibility = .hidden
         w.titlebarSeparatorStyle = .none
         w.backgroundColor = P.windowBg
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak w] _ in
+        observers.observe(.themeChanged) { [weak w] _ in
             w?.backgroundColor = P.windowBg
         }
         // nazwa strony zostaje w treści okna, pasek pokazuje tylko narzędzia

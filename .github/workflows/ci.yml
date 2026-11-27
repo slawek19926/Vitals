@@ -16,4 +16,4 @@ jobs:
       - name: Release build
         run: swift build -c release
       - name: Validate packaging scripts
-        run: zsh -n build.sh release.sh
+        run: zsh -n build.sh release.sh dmg.sh

@@ -186,6 +186,7 @@ class CardView: ThemedView {
 final class StatView: NSStackView {
     let caption: NSTextField
     let valueLabel: FlashLabel
+    private let observers = ObserverBag()
     var value: String { get { valueLabel.stringValue } set { valueLabel.update(newValue, flash: false) } }
 
     init(_ caption: String, value: String = "—", valueSize: CGFloat = 13, accent: Subsystem? = nil) {
@@ -199,7 +200,7 @@ final class StatView: NSStackView {
         addArrangedSubview(valueLabel)
         self.caption.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         valueLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.caption.textColor = P.textDim
             self?.valueLabel.textColor = accent.map { P.accent($0) } ?? P.text
         }
@@ -212,6 +213,7 @@ final class StatView: NSStackView {
 final class KeyValueRow: NSStackView {
     let keyLabel: NSTextField
     let valueLabel: NSTextField
+    private let observers = ObserverBag()
     init(_ key: String, _ value: String, keyWidth: CGFloat = 170) {
         keyLabel = Label.make(L(key), size: 11.5, dim: true)
         valueLabel = Label.make(L(value), size: 11.5)
@@ -224,7 +226,7 @@ final class KeyValueRow: NSStackView {
         addArrangedSubview(valueLabel)
         keyLabel.widthAnchor.constraint(equalToConstant: keyWidth).isActive = true
         keyLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in
+        observers.observe(.themeChanged) { [weak self] _ in
             self?.keyLabel.textColor = P.textDim
             self?.valueLabel.textColor = P.text
         }
@@ -236,6 +238,7 @@ final class KeyValueRow: NSStackView {
 final class PageTitleView: NSView {
     let label = NSTextField(labelWithString: "")
     let icon = NSImageView()
+    private let observers = ObserverBag()
     var accessory: NSView? {
         didSet {
             oldValue?.removeFromSuperview()
@@ -285,11 +288,11 @@ final class PageTitleView: NSView {
             label.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
         for name in [Notification.Name.themeChanged, .prefsChanged] {
-        NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-            guard let self else { return }
-            self.icon.contentTintColor = P.textDim
-            self.label.attributedStringValue = NSAttributedString(string: self.label.stringValue, attributes: [.font: Fonts.title(27), .kern: 1.2, .foregroundColor: P.text])
-        }
+            observers.observe(name) { [weak self] _ in
+                guard let self else { return }
+                self.icon.contentTintColor = P.textDim
+                self.label.attributedStringValue = NSAttributedString(string: self.label.stringValue, attributes: [.font: Fonts.title(27), .kern: 1.2, .foregroundColor: P.text])
+            }
         }
     }
     required init?(coder: NSCoder) { fatalError() }

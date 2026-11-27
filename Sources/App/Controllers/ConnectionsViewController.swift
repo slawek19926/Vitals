@@ -192,8 +192,8 @@ final class ConnectionsViewController: NSViewController, NSTableViewDataSource, 
         for v in [title, filters, scroll] { v.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true }
         root.pin(to: view, insets: NSEdgeInsets(top: 2, left: 18, bottom: 10, right: 18))
         DispatchQueue.main.async { [weak self] in self?.updateColumnMode() }
-        NotificationCenter.default.addObserver(forName: .themeChanged, object: nil, queue: .main) { [weak self] _ in self?.table.reloadData() }
-        NotificationCenter.default.addObserver(forName: .filterConnections, object: nil, queue: .main) { [weak self] n in
+        observers.observe(.themeChanged) { [weak self] _ in self?.table.reloadData() }
+        observers.observe(.filterConnections) { [weak self] n in
             if let pid = n.object as? Int {
                 self?.scope.selectItem(at: 3)
                 self?.search.stringValue = "\(pid)"
@@ -201,6 +201,7 @@ final class ConnectionsViewController: NSViewController, NSTableViewDataSource, 
             }
         }
     }
+    private let observers = ObserverBag()
 
     func pageDidAppear() {
         reload()
