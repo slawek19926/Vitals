@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.2.5.156 — 2026-11-27
+
+### English
+
+This patch release fixes an untranslated Polish placeholder in the Power & sensors view.
+
+#### Fixes
+
+- **Power & sensors localization (#5):** sensor rows with no current reading now use the translation catalog (`L("Niedostępne")`) instead of a hardcoded Polish string, showing “Unavailable” in English and the localized label in Simplified Chinese. Thanks to [@peterw5000](https://github.com/peterw5000) for the report and fix.
+
+#### Downloads and verification
+
+- Open Vitals-1.2.5.156.dmg and drag Vitals into Applications, or use Vitals-1.2.5.156.zip for extraction or the in-app updater. SHA-256 checksum files are included for both downloads.
+- All 100 regression tests passed, including a new test verifying the unavailable placeholder across Polish, English and Simplified Chinese. Release packaging, ZIP and DMG contents, code signatures and all three language resources were verified.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie poprawkowe naprawia nieprzetłumaczony polski tekst zastępczy w widoku Zasilanie i czujniki.
+
+#### Poprawki
+
+- **Lokalizacja widoku Zasilanie i czujniki (#5):** wiersze czujników bez bieżącego odczytu korzystają teraz z katalogu tłumaczeń (`L("Niedostępne")`) zamiast wpisanego na sztywno polskiego napisu, dzięki czemu wyświetlają „Unavailable” po angielsku oraz odpowiednik w chińskim uproszczonym. Podziękowania dla [@peterw5000](https://github.com/peterw5000) za zgłoszenie i wskazanie poprawki.
+
+#### Pobieranie i weryfikacja
+
+- Otwórz Vitals-1.2.5.156.dmg i przeciągnij Vitals do Aplikacji albo użyj Vitals-1.2.5.156.zip do rozpakowania lub aktualizacji w aplikacji. Dla obu plików dołączono sumy kontrolne SHA-256.
+- Wszystkie 100 testów regresyjnych przeszło, w tym nowy test tłumaczenia etykiety „Niedostępne” w języku polskim, angielskim i chińskim uproszczonym. Sprawdzono pakowanie Release, zawartość ZIP i DMG, podpisy oraz zasoby wszystkich trzech języków.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.2.4.155 — 2026-11-27
 
 ### English
