@@ -120,4 +120,10 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    func testUnavailablePlaceholderTranslatesAcrossLanguages() {
+        XCTAssertEqual(L10n.t("Niedostępne", language: .english), "Unavailable")
+        XCTAssertEqual(L10n.t("Niedostępne", language: .polish), "Niedostępne")
+        XCTAssertFalse(L10n.t("Niedostępne", language: .simplifiedChinese).isEmpty)
+    }
+
 }

@@ -359,7 +359,7 @@ final class PowerFreqViewController: NSViewController, NSOutlineViewDataSource, 
             let match = filter.isEmpty || n.title.lowercased().contains(filter)
             n.cells[0].update(n.title, flash: false)
             n.cells[0].textColor = match ? P.text : P.textDim
-            let placeholder = n.isHeterogeneousGroup ? "" : "Niedostępne"
+            let placeholder = n.isHeterogeneousGroup ? "" : L("Niedostępne")
             n.cells[1].update(n.value.map(n.format) ?? placeholder, flash: false)
             if let lvl = n.heatLevel() {
                 n.cells[1].textColor = HeatScale.color(lvl)
