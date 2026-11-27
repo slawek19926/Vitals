@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.2.4.155 — 2026-11-27
+
+### English
+
+This release eliminates NotificationCenter observer leaks, lazy-loads main window pages for faster startup and live language switching, and cleans up localization and view structure.
+
+#### Fixes and improvements
+
+- **Observer lifecycle cleanup:** added `ObserverBag` to automatically unregister block-based `NotificationCenter` observers on deallocation across views, controllers and `AppDelegate`, and removed strong view captures in theme update callbacks. Switching languages or recreating views no longer accumulates leaked observers.
+- **Lazy-loaded pages:** `ContentViewController` now instantiates each of the 18 pages on first access rather than creating all controllers upfront, reducing startup work and memory overhead.
+- **Performance view modularization:** extracted `Sub`, `SubsystemCell` and `DetailView` from `PerformanceViewController` into `PerformanceViews` to keep performance UI components cleanly separated.
+- **Localization and CI:** localized the `.critical` thermal state in `Snapshot.thermalText` through the translation catalog, and added `dmg.sh` syntax checking to the CI workflow.
+
+#### Downloads and verification
+
+- Open Vitals-1.2.4.155.dmg and drag Vitals into Applications, or use Vitals-1.2.4.155.zip for extraction or the in-app updater. SHA-256 checksum files are included for both downloads.
+- All 99 regression tests passed, including new tests for `ObserverBag` deallocation and critical thermal state localization. Release packaging, ZIP and DMG contents, code signatures and all three language resources were verified.
+- The app is signed with an Apple Development certificate and is not notarized. Updating the privileged helper may require macOS authorization.
+
+<details>
+<summary>Polski — rozwiń changelog</summary>
+
+To wydanie usuwa wycieki obserwatorów `NotificationCenter`, wprowadza leniwe ładowanie stron głównego okna dla szybszego startu i przełączania języka w locie oraz porządkuje lokalizację i strukturę widoków.
+
+#### Poprawki i usprawnienia
+
+- **Porządek z obserwatorami:** dodano `ObserverBag`, który automatycznie wyrejestrowuje blokowe obserwatory `NotificationCenter` w `deinit` we wszystkich widokach, kontrolerach i `AppDelegate`, a także usunięto silne przechwytywanie widoków w callbackach zmiany motywu. Zmiana języka w locie i przebudowa widoków nie kumulują już starych obserwatorów.
+- **Leniwe ładowanie stron:** `ContentViewController` tworzy teraz każdą z 18 stron dopiero przy pierwszym wyborze zamiast inicjalizować wszystkie kontrolery na starcie, co zmniejsza narzut uruchomienia i zużycie pamięci.
+- **Porządek w widoku Wydajności:** wydzielono `Sub`, `SubsystemCell` i `DetailView` z `PerformanceViewController` do osobnego pliku `PerformanceViews`.
+- **Lokalizacja i CI:** stan termiczny `.critical` w `Snapshot.thermalText` korzysta teraz z katalogu tłumaczeń `L(...)`, a workflow CI sprawdza również składnię `dmg.sh`.
+
+#### Pobieranie i weryfikacja
+
+- Otwórz Vitals-1.2.4.155.dmg i przeciągnij Vitals do Aplikacji albo użyj Vitals-1.2.4.155.zip do rozpakowania lub aktualizacji w aplikacji. Dla obu plików dołączono sumy kontrolne SHA-256.
+- Wszystkie 99 testów regresyjnych przeszło, w tym nowe testy wyrejestrowywania `ObserverBag` oraz lokalizacji krytycznego stanu termicznego. Sprawdzono pakowanie Release, zawartość ZIP i DMG, podpisy oraz zasoby wszystkich trzech języków.
+- Aplikacja jest podpisana certyfikatem Apple Development i nie jest notaryzowana. Aktualizacja pomocnika uprzywilejowanego może wymagać autoryzacji macOS.
+
+</details>
+
 ## 1.2.3.154 — 2026-10-12
 
 ### English
